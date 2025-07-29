@@ -53,7 +53,7 @@ var app = builder.Build();
     
     app.UseWebSockets();
 
-    app.MapGet("/", async (HttpContext ctx, IMessenger messenger) =>
+    app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
     {
         if (!ctx.User.Identity?.IsAuthenticated ?? true)
         {
