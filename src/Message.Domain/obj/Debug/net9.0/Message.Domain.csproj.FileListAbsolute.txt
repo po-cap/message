@@ -1,0 +1,11 @@
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/bin/Debug/net9.0/Message.Domain.deps.json
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/bin/Debug/net9.0/Message.Domain.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/bin/Debug/net9.0/Message.Domain.pdb
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.AssemblyInfoInputs.cache
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.AssemblyInfo.cs
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.csproj.CoreCompileInputs.cache
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/refint/Message.Domain.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/Message.Domain.pdb
+/Users/supojen/2025/Product/Servers/Message/src/Message.Domain/obj/Debug/net9.0/ref/Message.Domain.dll

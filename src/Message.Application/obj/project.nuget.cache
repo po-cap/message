@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "dgSpecHash": "TdeFbTNgap8=",
+  "success": true,
+  "projectFilePath": "/Users/supojen/2025/Product/Servers/Message/src/Message.Application/Message.Application.csproj",
+  "expectedPackageFiles": [
+    "/Users/supojen/.nuget/packages/awssdk.core/4.0.0-preview.13/awssdk.core.4.0.0-preview.13.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/awssdk.s3/4.0.0-preview.13/awssdk.s3.4.0.0-preview.13.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.configuration/9.0.0/microsoft.extensions.configuration.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.configuration.abstractions/9.0.0/microsoft.extensions.configuration.abstractions.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.configuration.binder/9.0.0/microsoft.extensions.configuration.binder.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.dependencyinjection/9.0.0/microsoft.extensions.dependencyinjection.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/9.0.0/microsoft.extensions.dependencyinjection.abstractions.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.options/9.0.0/microsoft.extensions.options.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.options.configurationextensions/9.0.0/microsoft.extensions.options.configurationextensions.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/microsoft.extensions.primitives/9.0.0/microsoft.extensions.primitives.9.0.0.nupkg.sha512",
+    "/Users/supojen/.nuget/packages/po.media/1.0.14/po.media.1.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,15 @@
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/bin/Debug/net9.0/Message.Application.deps.json
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/bin/Debug/net9.0/Message.Application.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/bin/Debug/net9.0/Message.Application.pdb
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/bin/Debug/net9.0/Message.Domain.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/bin/Debug/net9.0/Message.Domain.pdb
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.csproj.AssemblyReference.cache
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.AssemblyInfoInputs.cache
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.AssemblyInfo.cs
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.csproj.CoreCompileInputs.cache
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message..2F68D87E.Up2Date
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/refint/Message.Application.dll
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/Message.Application.pdb
+/Users/supojen/2025/Product/Servers/Message/src/Message.Application/obj/Debug/net9.0/ref/Message.Application.dll
