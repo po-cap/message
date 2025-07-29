@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
             // Description - 
             //     定義 openid 的 endpoint
             var OIDC = builder.Configuration["OIDC"];
-            o.Authority = $"{OIDC}/oauth";
+            o.MetadataAddress = $"{OIDC}/oauth/.well-known/openid-configuration";
         
             // Description - 
             //     定義 Validate 過程中要 validate 哪些資料
