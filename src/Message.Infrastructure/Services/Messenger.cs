@@ -5,10 +5,11 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Message.Application.Models;
+using Message.Application.Services;
 using Message.Domain.Entities;
 using Po.Media;
 
-namespace Message.Application;
+namespace Message.Infrastructure.Services;
 
 internal class Messenger : IMessenger
 {

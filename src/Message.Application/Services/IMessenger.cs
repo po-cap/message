@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Message.Application;
+namespace Message.Application.Services;
 
 public interface IMessenger
 {
@@ -11,15 +11,4 @@ public interface IMessenger
     /// <param name="socket">連連接</param>
     /// <param name="userId">使用者ID</param>
     Task RunAsync(WebSocket socket, string userId);
-}
-
-
-public static class MessengerExtension
-{
-    public static IServiceCollection AddMessenger(this IServiceCollection services)
-    {
-        services.AddSingleton<IMessenger, Messenger>();
-
-        return services;
-    }
 }

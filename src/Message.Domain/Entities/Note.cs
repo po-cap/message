@@ -1,7 +1,12 @@
 namespace Message.Domain.Entities;
 
-public class Message
+public class Note
 {
+    /// <summary>
+    /// 訊息 ID
+    /// </summary>
+    public long Id { get; set; }
+    
     /// <summary>
     /// 發送者 ID
     /// </summary>
@@ -28,12 +33,7 @@ public class Message
     public DateTimeOffset CreatedAt { get; set; }
 
     /// <summary>
-    /// 是否已讀
+    /// 讀取時間
     /// </summary>
-    public bool IsRead { get; set; }
-
-    /// <summary>
-    /// 附件
-    /// </summary>
-    public string Attachment { get; set; }
+    public DateTimeOffset? ReadAt { get; set; }
 }

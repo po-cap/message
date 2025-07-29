@@ -8,7 +8,6 @@ public static class DI
 {
     public static IServiceCollection AddApplication(this IServiceCollection services,IConfiguration configuration)
     {
-        services.AddMessenger();
         services.AddMediaService(configuration);
         return services;
     }

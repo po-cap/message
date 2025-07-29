@@ -1,6 +1,8 @@
 using System.Net;
 using System.Security.Claims;
 using Message.Application;
+using Message.Application.Services;
+using Message.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -74,7 +76,9 @@ builder.Services.AddAuthorization(o =>
         .Build();
 });
 
-builder.Services.AddApplication(builder.Configuration);
+builder.Services
+       .AddApplication(builder.Configuration)
+       .AddInfrastructure(builder.Configuration);
 
 
 
