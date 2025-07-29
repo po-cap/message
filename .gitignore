@@ -1,0 +1,9 @@
+[Bb]in/
+[Oo]bj/
+publish/
+
+
+**/appsettings.json
+**/appsettings.Development.json
+**/id_aes
+**/id_rsa*
