@@ -1,7 +1,9 @@
+using System.Net;
 using System.Security.Claims;
 using Message.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +68,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
 {
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor   |
+                           ForwardedHeaders.XForwardedHost  | 
+                           ForwardedHeaders.XForwardedProto, 
+        
+        KnownProxies = { IPAddress.Parse("127.0.0.1") }
+    });   
+    
     app.UseAuthentication();
     app.UseAuthorization();
     
