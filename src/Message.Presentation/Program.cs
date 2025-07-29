@@ -1,21 +1,21 @@
 using System.Security.Claims;
 using Message.Application;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 {
-    var OIDC = builder.Configuration["OIDC"];
-    
     builder.Services.AddAuthentication("jwt")
         .AddJwtBearer("jwt", o =>
         {
             // Description - 
             //     告訴 framework，不要把 claim type 變成 Microsoft 自定義的 Type 
             o.MapInboundClaims = false;
-            
+        
             // Description - 
-            //     定義 openid 的 endpoint 
+            //     定義 openid 的 endpoint
+            var OIDC = builder.Configuration["OIDC"];
             o.Authority = $"{OIDC}/oauth";
         
             // Description - 
@@ -28,6 +28,24 @@ var builder = WebApplication.CreateBuilder(args);
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromMinutes(5),
                 RequireExpirationTime = true
+            };
+            
+            // 啟用詳細錯誤訊息
+            o.IncludeErrorDetails = true;
+        
+            // 事件處理器用於記錄詳細錯誤
+            o.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    Console.WriteLine("Token validated successfully");
+                    return Task.CompletedTask;
+                }
             };
         });
 
