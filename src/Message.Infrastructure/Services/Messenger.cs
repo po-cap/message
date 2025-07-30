@@ -7,29 +7,90 @@ using System.Text.Json;
 using Message.Application.Models;
 using Message.Application.Services;
 using Message.Domain.Entities;
-using Po.Media;
+using Message.Domain.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Message.Infrastructure.Services;
 
-internal class Messenger : IMessenger
+/// <summary>
+/// 代表一個使用者的長連接
+/// </summary>
+public class Connection
 {
-    private readonly IMediaService _mediaService;
-    private readonly ConcurrentDictionary<string, WebSocket> _sockets;
-    
-    public Messenger(IMediaService mediaService)
+    public static Connection New(WebSocket socket, User user)
     {
-        _mediaService = mediaService;
-        _sockets = [];
+        return new Connection()
+        {
+            Socket = socket,
+            User = user,
+        };
     }
     
-    public async Task RunAsync(WebSocket socket, string userId)
+    /// <summary>
+    /// 長連接
+    /// </summary>
+    public required WebSocket Socket { get; set; }
+
+    /// <summary>
+    /// 使用者
+    /// </summary>
+    public required User User { get; set; }
+}
+
+
+internal class Messenger : IMessenger
+{
+    //private readonly ConcurrentDictionary<long, WebSocket> _sockets;
+    private readonly ConcurrentDictionary<long, Connection> _sockets;
+    
+    
+    private readonly IServiceScopeFactory _scopeFactory;
+    
+    public Messenger(
+        IServiceScopeFactory scopeFactory)
     {
+        _sockets = [];
+        
+        _scopeFactory = scopeFactory;
+    }
+    
+    //public async Task RunAsync(WebSocket socket, string userId)
+    //{
+    //    if(!long.TryParse(userId, out var id))
+    //        throw Failure.Unauthorized();
+    //    
+    //    // processing -
+    //    //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
+    //    var success = false;
+    //    for (var i = 0; i < 3; i++)
+    //    {
+    //        success = _sockets.TryAdd(id, socket);
+    //        if (success) 
+    //            break;
+    //        Thread.Sleep(100);
+    //    }
+    //
+    //    if (success)
+    //    {
+    //        await _runAsync(socket, id);
+    //    }
+    //}
+
+    public async Task RunAsync(WebSocket socket, string token)
+    {
+        User user;
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var userRepo = scope.ServiceProvider.GetService<IUserRepository>() ?? throw new Exception();
+            user = await userRepo.GetAsync(token);
+        }
+        
         // processing -
         //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
         var success = false;
         for (var i = 0; i < 3; i++)
         {
-            success = _sockets.TryAdd(userId, socket);
+            success = _sockets.TryAdd(user.Id, Connection.New(socket, user));
             if (success) 
                 break;
             Thread.Sleep(100);
@@ -37,11 +98,11 @@ internal class Messenger : IMessenger
 
         if (success)
         {
-            await _runAsync(socket, userId);
+            await _runAsync(socket, user.Id);
         }
     }
 
-    private async Task _runAsync(WebSocket socket, string userId)
+    private async Task _runAsync(WebSocket socket, long userId)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(1024 * 4);
 
@@ -59,8 +120,13 @@ internal class Messenger : IMessenger
                 {
                     var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
                     var message = JsonSerializer.Deserialize<MessageDto>(content);
-                    message.From = userId;
-                    await _sendAsync(message);
+
+                    var user = _sockets[userId].User;
+                    message.From = user.Id;
+                    message.SenderAvatar = user.Avatar;
+                    message.SenderName = user.DisplayName;
+                    
+                    await _sendMessageAsync(message);
                 }
                 // condition - 如果是 close 幀，就關閉 web socket
                 else if (request.MessageType == WebSocketMessageType.Close)
@@ -79,7 +145,7 @@ internal class Messenger : IMessenger
         }
     }
     
-    private void _remove(string userId)
+    private void _remove(long userId)
     {
         for (var i = 0; i < 3; i++)
         {
@@ -89,32 +155,15 @@ internal class Messenger : IMessenger
         }
     }
     
-    private async Task _sendAsync(MessageDto message)
-    {
-        switch(message.Type)
-        {
-            case DataType.text:
-            case DataType.sticker:
-                await _sendMessageAsync(message);
-                break;
-            case DataType.image:
-                await _sendImageAsync(message);
-                break;
-            case DataType.video:
-                await _sendVideoAsync(message);
-                break;
-        }
-        
-    }
     
     private async Task _sendMessageAsync(MessageDto message)
     {
-        var socket = (
-            from s in _sockets 
-            where s.Key == message.To 
-            select s.Value).FirstOrDefault();
-        
-        if (socket is not null)
+        var connection = (
+            from x in _sockets 
+            where x.Key == message.To 
+            select x.Value).FirstOrDefault();
+
+        if (connection is not null)
         {
             var content = JsonSerializer.Serialize(message, new JsonSerializerOptions()
             {
@@ -122,89 +171,33 @@ internal class Messenger : IMessenger
             });
             var body    = Encoding.UTF8.GetBytes(content);
 
-            var buffer  = ArrayPool<byte>.Shared.Rent(body.Length);
+            // processing - 向系統租用一塊記憶體空間
+            var pool = ArrayPool<byte>.Shared;
+            var buffer  = pool.Rent(body.Length);
+            
+            // processing - 將訊息放入剛剛租用的記憶體空間內
             body.CopyTo(buffer,0);
             var segment = new ArraySegment<byte>(buffer, 0, body.Length);
-
-            if (socket.State == WebSocketState.Open)
+            
+            // processing - 發送消息
+            if (connection.Socket.State == WebSocketState.Open)
             {
-                await socket.SendAsync(
+                await connection.Socket.SendAsync(
                     segment, 
                     WebSocketMessageType.Text, 
                     endOfMessage: true,
                     CancellationToken.None);
             }
+            
+            // processing - 向系統歸還一塊記憶體空間
+            pool.Return(buffer);
         }
         
-        // TODO: 這裡要把 Message 存到 Repository 裡
-    }
-    
-    private async Task _sendImageAsync(MessageDto message)
-    {
-        var socket = (
-            from s in _sockets 
-            where s.Key == message.From 
-            select s.Value).FirstOrDefault();
-        if (socket == null) return; 
-                
-        var buffer = ArrayPool<byte>.Shared.Rent(5 * 1024 * 1024);
-
-        try
+        // description - 儲存訊息
+        using (var scope = _scopeFactory.CreateScope())
         {
-            var request = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-            if (request.MessageType != WebSocketMessageType.Binary) return;
-
-            using var stream = new MemoryStream();
-            await stream.WriteAsync(buffer, 0, request.Count);
-            var media = await _mediaService.UploadAsync(stream, new UploadOption()
-            {
-                Type = MediaType.image,
-                Directory = "message",
-                Name = $"tmp/{Guid.NewGuid()}.jpeg"
-            });
-
-            message.Content = media.Url;
-            await _sendMessageAsync(message);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
+            var noteRepo = scope.ServiceProvider.GetService<INoteRepository>();
+            noteRepo?.Add(message.ToDomain(isRead: connection is not null));
         }
     }
-    
-    private async Task _sendVideoAsync(MessageDto message)
-    {
-        var socket = (
-            from s in _sockets 
-            where s.Key == message.From 
-            select s.Value).FirstOrDefault();
-        if (socket == null) return; 
-                
-        var buffer = ArrayPool<byte>.Shared.Rent(25 * 1024 * 1024);
-
-        try
-        {
-            var request = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-            if (request.MessageType != WebSocketMessageType.Binary) return;
-
-            using var stream = new MemoryStream();
-            await stream.WriteAsync(buffer, 0, request.Count);
-            var media = await _mediaService.UploadAsync(stream, new UploadOption()
-            {
-                Type = MediaType.image,
-                Directory = "message",
-                Name = $"tmp/{Guid.NewGuid()}.jpeg"
-            });
-
-            message.Content = media.Url;
-            await _sendMessageAsync(message);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
-    }
-    
 }

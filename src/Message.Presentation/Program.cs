@@ -1,12 +1,13 @@
 using System.Net;
-using System.Security.Claims;
 using Message.Application;
+using Message.Application.Commands;
 using Message.Application.Services;
 using Message.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Mediator.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,21 +109,35 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
         
     if (ctx.WebSockets.IsWebSocketRequest)
     {
-        var sub = ctx.User.FindFirstValue("sub");
-        if (sub == null)
-        {
-            ctx.Response.StatusCode = 401;
-        }
-        else
-        {
-            using var socket = await ctx.WebSockets.AcceptWebSocketAsync();
-            await messenger.RunAsync(
-                socket:socket,
-                userId:sub);
-        } 
+        // processing - 取得 Json Web Token
+        var token = ctx.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        
+        // processing - 取得 WebSocket
+        using var socket = await ctx.WebSockets.AcceptWebSocketAsync();
+        
+        // processing - 跑 WebSocket 處理邏輯
+        await messenger.RunAsync(socket:socket, token:token);
     }
 }).RequireAuthorization();
-    
-    
+
+app.MapGet("/chat/message", async (IMediator mediator, long from, long to) =>
+{
+    var notes = await mediator.SendAsync(new GetUnReadNotesCommand()
+    {
+        From = from,
+        To = to,
+    });
+    return Results.Ok(notes);
+});
+
+app.MapGet("/chat/summary", async (IMediator mediator,long to) =>
+{
+    var conversations = await mediator.SendAsync(new SummaryCommand()
+    {
+        To = to,
+    });
+    return Results.Ok(conversations);
+});
+
 app.Run();
 

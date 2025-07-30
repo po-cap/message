@@ -28,10 +28,25 @@ public class Note
     public string Content { get; set; }
 
     /// <summary>
+    /// 發送者頭像
+    /// </summary>
+    public string SenderAvatar { get; set; }
+
+    /// <summary>
+    /// 發送者暱稱
+    /// </summary>
+    public string SenderName { get; set; }
+    
+    /// <summary>
     /// 發送時間
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>
+    /// 獲取時間（計算有幾條未讀訊息用的）
+    /// </summary>
+    public DateTimeOffset? GetAt { get; set; }
+    
     /// <summary>
     /// 讀取時間
     /// </summary>

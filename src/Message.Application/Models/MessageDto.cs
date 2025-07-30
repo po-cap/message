@@ -9,13 +9,13 @@ public struct MessageDto
     /// 收訊者
     /// </summary>
     [JsonPropertyName("to")]
-    public string To { get; set; }
+    public long To { get; set; }
 
     /// <summary>
     /// 發訊者
     /// </summary>
     [JsonPropertyName("from")]
-    public string From { get; set; }
+    public long From { get; set; }
 
     /// <summary>
     /// 訊息內容
@@ -28,4 +28,50 @@ public struct MessageDto
     /// </summary>
     [JsonPropertyName("type")]
     public DataType Type { get; set; }
+
+    /// <summary>
+    /// 傳訊者頭像
+    /// </summary>
+    [JsonPropertyName("senderAvatar")]
+    public string SenderAvatar { get; set; }
+
+    /// <summary>
+    /// 傳訊者名稱
+    /// </summary>
+    [JsonPropertyName("senderName")]
+    public string SenderName { get; set; }
+}
+
+public static partial class DtoExtension
+{
+    public static Note ToDomain(this MessageDto data, bool isRead = false)
+    {
+        var now = DateTimeOffset.Now;
+        
+        return new Note()
+        {
+            SenderId = data.From,
+            ReceiverId = data.To,
+            Type = data.Type,
+            Content = data.Content,
+            SenderAvatar = data.SenderAvatar,
+            SenderName = data.SenderName,
+            CreatedAt = now,
+            GetAt = isRead ? now : null,
+            ReadAt = isRead ? now : null,
+        };
+    }
+
+    public static MessageDto ToDto(this Note note)
+    {
+        return new MessageDto()
+        {
+            To = note.ReceiverId,
+            From = note.SenderId,
+            Content = note.Content,
+            Type = note.Type,
+            SenderAvatar = note.SenderAvatar,
+            SenderName = note.SenderName
+        };
+    }
 }

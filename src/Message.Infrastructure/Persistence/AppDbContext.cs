@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<Note> Notes { get; set; }
     
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var config = new DbConfig();
