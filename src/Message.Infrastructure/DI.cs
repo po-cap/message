@@ -31,6 +31,12 @@ public static class DI
             });
         });
         
+        // description - Auth資料庫配置
+        services.AddDbContext<AuthDbContext>(opts =>
+        {
+            opts.UseNpgsql(config.GetConnectionString("Main"));
+        });
+        
         // description - Message Mediator
         services.AddSingleton<IMessenger, Messenger>();
         

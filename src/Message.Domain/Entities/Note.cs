@@ -26,16 +26,6 @@ public class Note
     /// 內容
     /// </summary>
     public string Content { get; set; }
-
-    /// <summary>
-    /// 發送者頭像
-    /// </summary>
-    public string SenderAvatar { get; set; }
-
-    /// <summary>
-    /// 發送者暱稱
-    /// </summary>
-    public string SenderName { get; set; }
     
     /// <summary>
     /// 發送時間

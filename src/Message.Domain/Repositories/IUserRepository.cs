@@ -7,7 +7,7 @@ public interface IUserRepository
     /// <summary>
     /// 取得使用者資訊
     /// </summary>
-    /// <param name="token">Json Web Token</param>
+    /// <param name="ids"></param>
     /// <returns></returns>
-    Task<User> GetAsync(string token);
+    List<User> Get(long[] ids);
 }

@@ -80,7 +80,7 @@ builder.Services.AddAuthorization(o =>
 });
 
 builder.Services
-       .AddApplication(builder.Configuration)
+       .AddApplication()
        .AddInfrastructure(builder.Configuration);
 
 
@@ -111,6 +111,13 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
         
     if (ctx.WebSockets.IsWebSocketRequest)
     {
+        var sub = ctx.User.FindFirst("sub")?.Value;
+        if(sub == null)
+            throw Failure.Unauthorized();
+    
+        if(!long.TryParse(sub, out var userId))
+            throw Failure.Unauthorized();
+        
         // processing - 取得 Json Web Token
         var token = ctx.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         
@@ -118,7 +125,7 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
         using var socket = await ctx.WebSockets.AcceptWebSocketAsync();
         
         // processing - 跑 WebSocket 處理邏輯
-        await messenger.RunAsync(socket:socket, token:token);
+        await messenger.RunAsync(socket:socket, userId: userId);
     }
 }).RequireAuthorization();
 
@@ -148,7 +155,7 @@ app.MapGet("/message", async (HttpContext ctx, IMediator mediator, long? from) =
         });
         return Results.Ok(conversations);
     }
-});
+}).RequireAuthorization();
 
 
 

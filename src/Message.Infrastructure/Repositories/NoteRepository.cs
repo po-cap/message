@@ -53,7 +53,8 @@ public class NoteRepository : INoteRepository
         // processing -
         var notes = _context.Notes
             .Where(x => x.ReceiverId == to)
-            .Where(x => x.GetAt == null);
+            .Where(x => x.GetAt == null)
+            .ToList();
 
         // processing - 
         var now = DateTimeOffset.Now;

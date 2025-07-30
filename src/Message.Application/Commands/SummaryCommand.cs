@@ -15,26 +15,39 @@ public class SummaryCommand : IRequest<IEnumerable<ConversationDto>>
 public class SummaryHandler : IRequestHandler<SummaryCommand,IEnumerable<ConversationDto>>
 {
     private readonly INoteRepository _noteRepository;
+    private readonly IUserRepository _userRepository;
 
-    public SummaryHandler(INoteRepository noteRepository)
+    public SummaryHandler(INoteRepository noteRepository, IUserRepository userRepository)
     {
         _noteRepository = noteRepository;
+        _userRepository = userRepository;
     }
 
 
     public Task<IEnumerable<ConversationDto>> HandleAsync(SummaryCommand request)
     {
         var notes = _noteRepository.Summary(request.To);
+        
+        var group = notes.GroupBy(x => x.SenderId);
 
-        return Task.FromResult(notes.GroupBy(
-            x => x.SenderId,
-            (conversation, messages) => new ConversationDto()
+        var ids = group.Select(x => x.Key).ToArray();
+        
+        var users = _userRepository.Get(ids);
+
+        var conversations = group.Select((messages) =>
+        {
+            var user = users.First(x => x.Id == messages.Key);
+            
+            return new ConversationDto()
             {
-                SenderId = conversation,
+                SenderId = messages.Key,
                 UnReadCount = messages.Count(),
                 LastMessage = messages.Last().ToDto(),
-                SenderName = messages.First().SenderName,
-                SenderAvatar = messages.First().SenderAvatar,
-            })); 
+                SenderAvatar = user.Avatar,
+                SenderName = user.DisplayName
+            };
+        });
+
+        return Task.FromResult(conversations);
     }
 }

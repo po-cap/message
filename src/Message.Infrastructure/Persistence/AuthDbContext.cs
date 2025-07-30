@@ -3,20 +3,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Message.Infrastructure.Persistence;
 
-public class AppDbContext : DbContext
+public class AuthDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
+    public AuthDbContext(DbContextOptions<AuthDbContext> opts) : base(opts) { }
 
     /// <summary>
     /// 訊息
     /// </summary>
-    public DbSet<Note> Notes { get; set; }
+    public DbSet<User> Users { get; set; }
     
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var config = new DbConfig();
-        modelBuilder.ApplyConfiguration<Note>(config);
+        modelBuilder.ApplyConfiguration<User>(config);
     }
     
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

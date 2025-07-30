@@ -1,20 +1,21 @@
 using Message.Domain.Entities;
 using Message.Domain.Repositories;
+using Message.Infrastructure.Persistence;
 using Message.Infrastructure.Services;
 
 namespace Message.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly AuthClient _authClient;
+    private readonly AuthDbContext _dbContext;
 
-    public UserRepository(AuthClient authClient)
+    public UserRepository(AuthDbContext dbContext)
     {
-        _authClient = authClient;
+        _dbContext = dbContext;
     }
 
-    public Task<User> GetAsync(string token)
+    public List<User> Get(long[] ids)
     {
-        return _authClient.GetAsync(token);
+        return _dbContext.Users.Where(x => ids.Contains(x.Id)).ToList();
     }
 }

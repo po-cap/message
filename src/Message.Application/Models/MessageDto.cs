@@ -11,9 +11,9 @@ public struct MessageDto
     [JsonPropertyName("to")]
     public long To { get; set; }
 
-    /// <summary>
-    /// 發訊者
-    /// </summary>
+    ///// <summary>
+    ///// 發訊者
+    ///// </summary>
     [JsonPropertyName("from")]
     public long From { get; set; }
 
@@ -28,18 +28,6 @@ public struct MessageDto
     /// </summary>
     [JsonPropertyName("type")]
     public DataType Type { get; set; }
-
-    /// <summary>
-    /// 傳訊者頭像
-    /// </summary>
-    [JsonPropertyName("senderAvatar")]
-    public string SenderAvatar { get; set; }
-
-    /// <summary>
-    /// 傳訊者名稱
-    /// </summary>
-    [JsonPropertyName("senderName")]
-    public string SenderName { get; set; }
 }
 
 public static partial class DtoExtension
@@ -54,8 +42,6 @@ public static partial class DtoExtension
             ReceiverId = data.To,
             Type = data.Type,
             Content = data.Content,
-            SenderAvatar = data.SenderAvatar,
-            SenderName = data.SenderName,
             CreatedAt = now,
             GetAt = isRead ? now : null,
             ReadAt = isRead ? now : null,
@@ -70,8 +56,6 @@ public static partial class DtoExtension
             From = note.SenderId,
             Content = note.Content,
             Type = note.Type,
-            SenderAvatar = note.SenderAvatar,
-            SenderName = note.SenderName
         };
     }
 }

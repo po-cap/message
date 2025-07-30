@@ -41,7 +41,7 @@ public class Connection
 internal class Messenger : IMessenger
 {
     //private readonly ConcurrentDictionary<long, WebSocket> _sockets;
-    private readonly ConcurrentDictionary<long, Connection> _sockets;
+    private readonly ConcurrentDictionary<long, WebSocket> _sockets;
     
     
     private readonly IServiceScopeFactory _scopeFactory;
@@ -54,43 +54,14 @@ internal class Messenger : IMessenger
         _scopeFactory = scopeFactory;
     }
     
-    //public async Task RunAsync(WebSocket socket, string userId)
-    //{
-    //    if(!long.TryParse(userId, out var id))
-    //        throw Failure.Unauthorized();
-    //    
-    //    // processing -
-    //    //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
-    //    var success = false;
-    //    for (var i = 0; i < 3; i++)
-    //    {
-    //        success = _sockets.TryAdd(id, socket);
-    //        if (success) 
-    //            break;
-    //        Thread.Sleep(100);
-    //    }
-    //
-    //    if (success)
-    //    {
-    //        await _runAsync(socket, id);
-    //    }
-    //}
-
-    public async Task RunAsync(WebSocket socket, string token)
+    public async Task RunAsync(WebSocket socket, long userId)
     {
-        User user;
-        using (var scope = _scopeFactory.CreateScope())
-        {
-            var userRepo = scope.ServiceProvider.GetService<IUserRepository>() ?? throw new Exception();
-            user = await userRepo.GetAsync(token);
-        }
-        
         // processing -
         //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
         var success = false;
         for (var i = 0; i < 3; i++)
         {
-            success = _sockets.TryAdd(user.Id, Connection.New(socket, user));
+            success = _sockets.TryAdd(userId, socket);
             if (success) 
                 break;
             Thread.Sleep(100);
@@ -98,7 +69,7 @@ internal class Messenger : IMessenger
 
         if (success)
         {
-            await _runAsync(socket, user.Id);
+            await _runAsync(socket, userId);
         }
     }
 
@@ -120,12 +91,7 @@ internal class Messenger : IMessenger
                 {
                     var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
                     var message = JsonSerializer.Deserialize<MessageDto>(content);
-
-                    var user = _sockets[userId].User;
-                    message.From = user.Id;
-                    message.SenderAvatar = user.Avatar;
-                    message.SenderName = user.DisplayName;
-                    
+                    message.From = userId;
                     await _sendMessageAsync(message);
                 }
                 // condition - 如果是 close 幀，就關閉 web socket
@@ -158,12 +124,12 @@ internal class Messenger : IMessenger
     
     private async Task _sendMessageAsync(MessageDto message)
     {
-        var connection = (
+        var socket = (
             from x in _sockets 
             where x.Key == message.To 
             select x.Value).FirstOrDefault();
 
-        if (connection is not null)
+        if (socket is not null)
         {
             var content = JsonSerializer.Serialize(message, new JsonSerializerOptions()
             {
@@ -180,9 +146,9 @@ internal class Messenger : IMessenger
             var segment = new ArraySegment<byte>(buffer, 0, body.Length);
             
             // processing - 發送消息
-            if (connection.Socket.State == WebSocketState.Open)
+            if (socket.State == WebSocketState.Open)
             {
-                await connection.Socket.SendAsync(
+                await socket.SendAsync(
                     segment, 
                     WebSocketMessageType.Text, 
                     endOfMessage: true,
@@ -196,8 +162,9 @@ internal class Messenger : IMessenger
         // description - 儲存訊息
         using (var scope = _scopeFactory.CreateScope())
         {
+            var note = message.ToDomain(isRead: socket is not null);
             var noteRepo = scope.ServiceProvider.GetService<INoteRepository>();
-            noteRepo?.Add(message.ToDomain(isRead: connection is not null));
+            noteRepo?.Add(note);
         }
     }
 }
