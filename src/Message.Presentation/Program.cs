@@ -3,10 +3,12 @@ using Message.Application;
 using Message.Application.Commands;
 using Message.Application.Services;
 using Message.Infrastructure;
+using Message.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
+using Po.Api.Response;
 using Shared.Mediator.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -120,24 +122,35 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
     }
 }).RequireAuthorization();
 
-app.MapGet("/chat/message", async (IMediator mediator, long from, long to) =>
+app.MapGet("/message", async (HttpContext ctx, IMediator mediator, long? from) =>
 {
-    var notes = await mediator.SendAsync(new GetUnReadNotesCommand()
+    var sub = ctx.User.FindFirst("sub")?.Value;
+    if(sub == null)
+        throw Failure.Unauthorized();
+    
+    if(!long.TryParse(sub, out var userId))
+        throw Failure.Unauthorized();
+
+    if (from != null)
     {
-        From = from,
-        To = to,
-    });
-    return Results.Ok(notes);
+        var notes = await mediator.SendAsync(new GetUnReadNotesCommand()
+        {
+            From = from.Value,
+            To = userId,
+        });
+        return Results.Ok(notes);
+    }
+    else
+    {
+        var conversations = await mediator.SendAsync(new SummaryCommand()
+        {
+            To = userId,
+        });
+        return Results.Ok(conversations);
+    }
 });
 
-app.MapGet("/chat/summary", async (IMediator mediator,long to) =>
-{
-    var conversations = await mediator.SendAsync(new SummaryCommand()
-    {
-        To = to,
-    });
-    return Results.Ok(conversations);
-});
+
 
 app.Run();
 
