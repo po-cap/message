@@ -48,6 +48,7 @@ public static class DI
         // description - repositories
         services.AddScoped<INoteRepository, NoteRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IItemRepository, ItemRepository>();
 
         // description - 使用者 Repository 使用了 Http Client
         services.AddHttpClient<AuthClient>(client =>

@@ -6,6 +6,11 @@ public class Note
     /// 訊息 ID
     /// </summary>
     public long Id { get; set; }
+
+    /// <summary>
+    /// 商品 ID
+    /// </summary>
+    public long ItemId { get; set; }
     
     /// <summary>
     /// 發送者 ID

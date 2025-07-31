@@ -6,6 +6,12 @@ namespace Message.Application.Models;
 public struct MessageDto
 {
     /// <summary>
+    /// 商品 ID
+    /// </summary>
+    [JsonPropertyName("itemId")]
+    public long ItemId { get; set; }
+    
+    /// <summary>
     /// 收訊者
     /// </summary>
     [JsonPropertyName("to")]
@@ -38,6 +44,7 @@ public static partial class DtoExtension
         
         return new Note()
         {
+            ItemId = data.ItemId,
             SenderId = data.From,
             ReceiverId = data.To,
             Type = data.Type,

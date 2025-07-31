@@ -1,4 +1,5 @@
 using Message.Application.Models;
+using Message.Domain.Entities;
 using Message.Domain.Repositories;
 using Shared.Mediator.Interface;
 
@@ -15,12 +16,14 @@ public class SummaryCommand : IRequest<IEnumerable<ConversationDto>>
 public class SummaryHandler : IRequestHandler<SummaryCommand,IEnumerable<ConversationDto>>
 {
     private readonly INoteRepository _noteRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IItemRepository _itemRepository;
 
-    public SummaryHandler(INoteRepository noteRepository, IUserRepository userRepository)
+    public SummaryHandler(
+        INoteRepository noteRepository, 
+        IItemRepository itemRepository)
     {
         _noteRepository = noteRepository;
-        _userRepository = userRepository;
+        _itemRepository = itemRepository;
     }
 
 
@@ -28,23 +31,21 @@ public class SummaryHandler : IRequestHandler<SummaryCommand,IEnumerable<Convers
     {
         var notes = _noteRepository.Summary(request.To);
         
-        var group = notes.GroupBy(x => x.SenderId);
+        var group = notes.GroupBy(x => x.ItemId);
 
         var ids = group.Select(x => x.Key).ToArray();
         
-        var users = _userRepository.Get(ids);
+        var items = _itemRepository.Get(ids);
 
         var conversations = group.Select((messages) =>
         {
-            var user = users.First(x => x.Id == messages.Key);
+            var item = items.First(x => x.Id == messages.Key);
             
             return new ConversationDto()
             {
-                SenderId = messages.Key,
-                UnReadCount = messages.Count(),
+                UnreadCount = messages.Count(),
                 LastMessage = messages.Last().ToDto(),
-                SenderAvatar = user.Avatar,
-                SenderName = user.DisplayName
+                Item = item
             };
         });
 

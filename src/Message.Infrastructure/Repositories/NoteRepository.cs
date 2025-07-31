@@ -2,6 +2,7 @@ using Message.Domain.Entities;
 using Message.Domain.Repositories;
 using Message.Infrastructure.Persistence;
 using Message.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Message.Infrastructure.Repositories;
 
@@ -54,6 +55,8 @@ public class NoteRepository : INoteRepository
         var notes = _context.Notes
             .Where(x => x.ReceiverId == to)
             .Where(x => x.GetAt == null)
+            //.Include(x => x.Item)
+            //.ThenInclude(x => x.User)
             .ToList();
 
         // processing - 

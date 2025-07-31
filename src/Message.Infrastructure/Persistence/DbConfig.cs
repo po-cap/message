@@ -6,7 +6,8 @@ namespace Message.Infrastructure.Persistence;
 
 public class DbConfig : 
     IEntityTypeConfiguration<Note>, 
-    IEntityTypeConfiguration<User>
+    IEntityTypeConfiguration<User>,
+    IEntityTypeConfiguration<Item>
 {
     public void Configure(EntityTypeBuilder<Note> builder)
     {
@@ -27,5 +28,15 @@ public class DbConfig :
         builder.Property(x => x.Id).HasColumnName("id");
         builder.Property(x => x.Avatar).HasColumnName("avatar");
         builder.Property(x => x.DisplayName).HasColumnName("display_name");
+    }
+
+    public void Configure(EntityTypeBuilder<Item> builder)
+    {
+        builder.ToTable("items").HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.Description).HasColumnName("description");
+        builder.Property(x => x.Albums).HasColumnName("albums");
+        builder.Property(x => x.Specs).HasColumnName("spec").HasColumnType("jsonb");
+        builder.HasOne(x => x.User).WithMany().HasForeignKey("user_id");
     }
 }

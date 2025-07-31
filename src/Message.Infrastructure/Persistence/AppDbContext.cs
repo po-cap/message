@@ -11,12 +11,18 @@ public class AppDbContext : DbContext
     /// 訊息
     /// </summary>
     public DbSet<Note> Notes { get; set; }
+
+    /// <summary>
+    /// 商品
+    /// </summary>
+    public DbSet<Item> Items { get; set; }
     
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var config = new DbConfig();
         modelBuilder.ApplyConfiguration<Note>(config);
+        modelBuilder.ApplyConfiguration<Item>(config);
     }
     
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
