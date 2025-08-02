@@ -69,6 +69,36 @@ internal class Messenger : IMessenger
 
         if (success)
         {
+            #region "TEST"
+            
+            var body    = Encoding.UTF8.GetBytes($"Hello: {userId}");
+
+            // processing - 向系統租用一塊記憶體空間
+            var pool = ArrayPool<byte>.Shared;
+            var buffer  = pool.Rent(body.Length);
+            
+            // processing - 將訊息放入剛剛租用的記憶體空間內
+            body.CopyTo(buffer,0);
+            var segment = new ArraySegment<byte>(buffer, 0, body.Length);
+            
+            // processing - 發送消息
+            if (socket.State == WebSocketState.Open)
+            {
+                await socket.SendAsync(
+                    segment, 
+                    WebSocketMessageType.Text, 
+                    endOfMessage: true,
+                    CancellationToken.None);
+            }
+            
+            // processing - 向系統歸還一塊記憶體空間
+            pool.Return(buffer);
+            
+            #endregion
+            
+            
+            
+            // 跑邏輯
             await _runAsync(socket, userId);
         }
     }

@@ -1,5 +1,4 @@
 using Message.Application.Models;
-using Message.Domain.Entities;
 using Message.Domain.Repositories;
 using Shared.Mediator.Interface;
 
