@@ -13,6 +13,7 @@ public class DbConfig :
     {
         builder.ToTable("messages").HasKey(x => x.Id);
         builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.ItemId).HasColumnName("item_id");
         builder.Property(x => x.SenderId).HasColumnName("sender_id");
         builder.Property(x => x.ReceiverId).HasColumnName("receiver_id");
         builder.Property(x => x.Type).HasColumnName("message_type");
