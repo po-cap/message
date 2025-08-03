@@ -21,9 +21,9 @@ public interface IChatRoom
     /// <summary>
     /// 傳送訊息
     /// </summary>
-    /// <param name="message">訊息</param>
+    /// <param name="submittedMessage">訊息</param>
     /// <returns></returns>
-    Task SendAsync(MessageDto message);
+    Task SendAsync(SubmittedMessageDto submittedMessage);
     
     /// <summary>
     /// 使用者 - 斷開長連接 (Web Socket)
@@ -47,7 +47,7 @@ public class ChatRoom : IChatRoom
         _sockets.Add(userId, socket);
     }
 
-    public async Task SendAsync(MessageDto message)
+    public async Task SendAsync(SubmittedMessageDto submittedMessage)
     {
         //// TODO: 判斷 Message 的種類，如果是 Image 或是 Video，那先將檔案上傳到 S3，再把 Attachment 的部分修改成 url
         //
@@ -76,9 +76,9 @@ public class ChatRoom : IChatRoom
         _sockets.Remove(userId);
     }
 
-    private ArraySegment<byte> ToBytes(MessageDto message)
+    private ArraySegment<byte> ToBytes(SubmittedMessageDto submittedMessage)
     {
-        var content = JsonSerializer.Serialize(message);
+        var content = JsonSerializer.Serialize(submittedMessage);
         var body    = Encoding.UTF8.GetBytes(content);
         return new ArraySegment<byte>(body);
     }
@@ -86,20 +86,20 @@ public class ChatRoom : IChatRoom
 
 internal static class BytesExt
 {
-    internal static ArraySegment<byte> ToBytes(this MessageDto message)
+    internal static ArraySegment<byte> ToBytes(this SubmittedMessageDto submittedMessage)
     {
-        var content = JsonSerializer.Serialize(message);
+        var content = JsonSerializer.Serialize(submittedMessage);
         var body    = Encoding.UTF8.GetBytes(content);
         return new ArraySegment<byte>(body);
     }
 
-    internal static MessageDto? ToMessage(this WebSocketReceiveResult request)
+    internal static SubmittedMessageDto? ToMessage(this WebSocketReceiveResult request)
     {
         // processing - 租借 4kb 空間
         var buffer = ArrayPool<byte>.Shared.Rent(1024 * 4);
         
         var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
-        var message = JsonSerializer.Deserialize<MessageDto>(content);
+        var message = JsonSerializer.Deserialize<SubmittedMessageDto>(content);
         
         // processing - 歸還 4kb 空間
         ArrayPool<byte>.Shared.Return(buffer);

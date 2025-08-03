@@ -8,9 +8,9 @@ public class Note
     public long Id { get; set; }
 
     /// <summary>
-    /// 商品 ID
+    /// 對話 ID
     /// </summary>
-    public long ItemId { get; set; }
+    public long ConversationId { get; set; }
     
     /// <summary>
     /// 發送者 ID
@@ -36,11 +36,6 @@ public class Note
     /// 發送時間
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
-
-    /// <summary>
-    /// 獲取時間（計算有幾條未讀訊息用的）
-    /// </summary>
-    public DateTimeOffset? GetAt { get; set; }
     
     /// <summary>
     /// 讀取時間

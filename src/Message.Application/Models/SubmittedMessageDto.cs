@@ -3,13 +3,38 @@ using Message.Domain.Entities;
 
 namespace Message.Application.Models;
 
-public struct MessageDto
+/// <summary>
+/// 將要傳送出去的 message dto
+/// </summary>
+public struct SubmittedMessageDto
 {
+    /// <summary>
+    /// 建立成功回傳訊息
+    /// </summary>
+    /// <returns></returns>
+    public static SubmittedMessageDto Success()
+    {
+        return new SubmittedMessageDto()
+        {
+            Type = DataType.success,
+            Content = "",
+            ConversationId = 0,
+            To = 0,
+            From = 0
+        };
+    }
+
+    /// <summary>
+    /// 訊息 ID
+    /// </summary>
+    [JsonPropertyName("id")]
+    public long Id { get; set; }
+    
     /// <summary>
     /// 商品 ID
     /// </summary>
-    [JsonPropertyName("itemId")]
-    public long ItemId { get; set; }
+    [JsonPropertyName("conversationId")]
+    public long ConversationId { get; set; }
     
     /// <summary>
     /// 收訊者
@@ -38,27 +63,35 @@ public struct MessageDto
 
 public static partial class DtoExtension
 {
-    public static Note ToDomain(this MessageDto data, bool isRead = false)
+    public static SubmittedMessageDto ToSuccess(this SubmittedMessageDto data)
+    {
+        data.Type = DataType.success;
+        return data;
+    }
+    
+    
+    public static Note ToDomain(this SubmittedMessageDto data, bool isRead = false)
     {
         var now = DateTimeOffset.Now;
         
         return new Note()
         {
-            ItemId = data.ItemId,
+            Id = data.Id,
+            ConversationId = data.ConversationId,
             SenderId = data.From,
             ReceiverId = data.To,
             Type = data.Type,
             Content = data.Content,
             CreatedAt = now,
-            GetAt = isRead ? now : null,
             ReadAt = isRead ? now : null,
         };
     }
 
-    public static MessageDto ToDto(this Note note)
+    public static SubmittedMessageDto ToDto(this Note note)
     {
-        return new MessageDto()
+        return new SubmittedMessageDto()
         {
+            Id = note.Id,
             To = note.ReceiverId,
             From = note.SenderId,
             Content = note.Content,

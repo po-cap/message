@@ -7,7 +7,6 @@ using Message.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 
 namespace Message.Infrastructure;
 
@@ -49,6 +48,7 @@ public static class DI
         services.AddScoped<INoteRepository, NoteRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
 
         // description - 使用者 Repository 使用了 Http Client
         services.AddHttpClient<AuthClient>(client =>

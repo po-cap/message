@@ -1,12 +1,15 @@
+using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 using Message.Application;
 using Message.Application.Commands;
 using Message.Application.Services;
+using Message.Domain.Repositories;
 using Message.Infrastructure;
-using Message.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Po.Api.Response;
 using Shared.Mediator.Interface;
@@ -57,16 +60,27 @@ builder.Services.AddAuthentication("jwt")
         // 事件處理器用於記錄詳細錯誤
         o.Events = new JwtBearerEvents
         {
-            OnAuthenticationFailed = context =>
+            // 當認證失敗時
+            OnChallenge = async context =>
             {
-                Console.WriteLine($"Authentication failed: {context.Exception.Message}");
-                return Task.CompletedTask;
+                context.HandleResponse();
+        
+                var problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = context.ErrorDescription ?? "无效的认证令牌",
+                    Instance = context.Request.Path
+                };
+                
+                var traceId = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+                problemDetails.Extensions["traceId"] = traceId;
+        
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/problem+json";
+        
+                await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails));
             },
-            OnTokenValidated = _ =>
-            {
-                Console.WriteLine("Token validated successfully");
-                return Task.CompletedTask;
-            }
         };
     });
 
@@ -94,12 +108,71 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
                        ForwardedHeaders.XForwardedProto, 
         
     KnownProxies = { IPAddress.Parse("127.0.0.1") }
-});   
-    
+});
+
+app.UseExceptionHandle();
 app.UseAuthentication();
 app.UseAuthorization();
     
 app.UseWebSockets();
+
+
+app.MapPost("/conversation", async (
+    HttpContext ctx, 
+    IMediator mediator, 
+    long itemId) =>
+{
+    var sub = ctx.User.FindFirst("sub")?.Value;
+    if(sub == null)
+        throw Failure.Unauthorized();
+    
+    if(!long.TryParse(sub, out var userId))
+        throw Failure.Unauthorized();
+    
+    var command = new StartConversationCommand()
+    {
+        BuyerId = userId,
+        ItemId = itemId,
+    };
+
+    var conversation = await mediator.SendAsync(command);
+
+    return Results.Ok(conversation);
+}).RequireAuthorization();
+
+app.MapGet("/conversation", (
+    HttpContext ctx, 
+    IConversationRepository repository) =>
+{
+    var sub = ctx.User.FindFirst("sub")?.Value;
+    if(sub == null)
+        throw Failure.Unauthorized();
+    
+    if(!long.TryParse(sub, out var userId))
+        throw Failure.Unauthorized();
+
+    var conversations = repository.Get(userId);
+    
+    return Results.Ok(conversations);
+}).RequireAuthorization();
+
+app.MapGet("/conversation/{conversationId:long}", (
+    HttpContext ctx, 
+    INoteRepository repository,
+    long conversationId) =>
+{
+    var sub = ctx.User.FindFirst("sub")?.Value;
+    if(sub == null)
+        throw Failure.Unauthorized();
+    
+    if(!long.TryParse(sub, out var userId))
+        throw Failure.Unauthorized();
+
+    var msgs = repository.Get(userId, conversationId);
+
+    return Results.Ok(msgs);
+
+}).RequireAuthorization();
 
 app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
 {
@@ -129,33 +202,7 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
     }
 }).RequireAuthorization();
 
-app.MapGet("/message", async (HttpContext ctx, IMediator mediator, long? from) =>
-{
-    var sub = ctx.User.FindFirst("sub")?.Value;
-    if(sub == null)
-        throw Failure.Unauthorized();
-    
-    if(!long.TryParse(sub, out var userId))
-        throw Failure.Unauthorized();
 
-    if (from != null)
-    {
-        var notes = await mediator.SendAsync(new GetUnReadNotesCommand()
-        {
-            From = from.Value,
-            To = userId,
-        });
-        return Results.Ok(notes);
-    }
-    else
-    {
-        var conversations = await mediator.SendAsync(new SummaryCommand()
-        {
-            To = userId,
-        });
-        return Results.Ok(conversations);
-    }
-}).RequireAuthorization();
 
 
 

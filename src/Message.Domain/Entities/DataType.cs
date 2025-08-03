@@ -3,6 +3,11 @@ namespace Message.Domain.Entities;
 public enum DataType
 {
     /// <summary>
+    /// 傳送成功訊號
+    /// </summary>
+    success = 0,
+    
+    /// <summary>
     /// 文字訊息
     /// </summary>
     text = 1,

@@ -13,7 +13,7 @@ public class ConversationDto
     /// <summary>
     /// 最後一則訊息
     /// </summary>
-    public MessageDto LastMessage { get; set; }
+    public SubmittedMessageDto LastSubmittedMessage { get; set; }
 
     /// <summary>
     /// 商品
