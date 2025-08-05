@@ -38,6 +38,11 @@ public class ConversationModel
     /// 用戶是否是買家
     /// </summary>
     public bool IsBuyer { get; set; }
+
+    /// <summary>
+    /// 未讀訊息
+    /// </summary>
+    public IEnumerable<MessageModel> Messages { get; set; }
 }
 
 public static partial class MapExtension
@@ -55,20 +60,8 @@ public static partial class MapExtension
             Item = entity.Item,
             LastMessageType = lastNote?.Type,
             LastMessage = lastNote?.Content,
-            IsBuyer = entity.Buyer.Id == userId
+            IsBuyer = entity.Buyer.Id == userId,
+            Messages = notes.Select(x => x.ToModel())
         };
-        
-        throw new NotImplementedException();
-        //var lastMessage = entity.Notes.MinBy(x => x.CreatedAt);
-        //
-        //return new ConversationDto()
-        //{
-        //    Id = entity.Id,
-        //    Item = entity.Item,
-        //    Buyer = entity.Buyer,
-        //    UnreadCount = entity.Notes.Count(x => x.ReadAt == null),
-        //    LastMessageType = lastMessage?.Type,
-        //    LastMessage = lastMessage?.Content
-        //};
     }
 } 

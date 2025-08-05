@@ -14,24 +14,6 @@ public struct MessageModel
     [JsonPropertyName("id")]
     public long Id { get; set; }
     
-    /// <summary>
-    /// 買家 ID
-    /// </summary>
-    [JsonPropertyName("buyerId")]
-    public long BuyerId { get; set; }
-
-    /// <summary>
-    /// 商品鏈結 ID
-    /// </summary>
-    [JsonPropertyName("itemId")]
-    public long ItemId { get; set; }
-    
-    /// <summary>
-    /// 收訊者
-    /// </summary>
-    [JsonPropertyName("to")]
-    public long To { get; set; }
-
     ///// <summary>
     ///// 發訊者
     ///// </summary>
@@ -59,12 +41,7 @@ public static partial class MapExtension
         return new MessageModel()
         {
             Id = note.Id,
-            BuyerId = note.BuyerId,
-            ItemId = note.ItemId,
-            
-            To = note.ReceiverId,
             From = note.SenderId,
-            
             Content = note.Content,
             Type = note.Type,
         };
