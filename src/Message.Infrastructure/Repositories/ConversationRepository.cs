@@ -18,59 +18,70 @@ public class ConversationRepository : IConversationRepository
         _snowflakeId = snowflakeId;
     }
 
-    public IEnumerable<object> Get(long userId)
+    public Conversation Get(long buyerId, long itemId)
     {
-        var unReadMsgs = _dbContext.Notes
-            .Where(x => x.ReceiverId == userId && x.ReadAt == null)
-            .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new
-            {
-                x.ConversationId,
-                x.Type,
-                x.Content
-            })
-            .ToList();
+        var k = _dbContext.Conversations
+            .Include(x => x.Item)
+            .ThenInclude(x => x.User)
+            .Include(x => x.Buyer)
+            .FirstOrDefault(x => x.BuyerId == buyerId && x.ItemId == itemId);
+
+        if (k == null) throw Failure.NotFound();
         
-        return unReadMsgs.GroupBy(x => x.ConversationId).Select((msgs) =>
+        _dbContext.Entry(k)
+            .Collection(x => x.Notes)
+            .Query()
+            .Where(x => x.ReadAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .Load();
+        
+        return k;
+    }
+
+    public IEnumerable<Conversation> Get(long userId)
+    {
+        var unreadMessages = _dbContext.Notes.Where(x => x.ReceiverId == userId || x.SenderId == userId).ToList();
+
+        return unreadMessages.GroupBy(x => new { x.BuyerId, x.ItemId }).Select((msgs) =>
         {
-            var conv = _dbContext.Conversations
-                .Include(x => x.Buyer)
-                .Include(x => x.Item)
-                .ThenInclude(x => x.User)
-                .First(x => x.Id == msgs.Key);
-            return new
-            {
-                UnreadCount = msgs.Count(),
-                Id = conv.Id,
-                Item = conv.Item,
-                Buyer = conv.Buyer,
-                lastMessageType = msgs.Last().Type,
-                lastMessage = msgs.Last().Content,
-            };
+            var conversation = _dbContext.Conversations.Find(msgs.Key.BuyerId, msgs.Key.ItemId);
+            
+            if(conversation == null) throw Failure.BadRequest();
+            
+            _dbContext.Entry(conversation).Reference(x => x.Buyer).Load();
+            _dbContext.Entry(conversation).Reference(x => x.Item).Load();
+            
+            return conversation;
         });
     }
+
     
     public Conversation Add(long buyerId, long itemId)
     {
-        var buyer = _dbContext.Users.First(x => x.Id == buyerId);
-        if(buyer == null)
-            throw Failure.NotFound();
-        
-        var item = _dbContext.Items.Include(x => x.User).FirstOrDefault(x => x.Id == itemId);
-        if(item == null)
-            throw Failure.NotFound();
-        
-        var conversation = new Conversation()
+        var conversation = _dbContext.Conversations.Find(buyerId, itemId);
+
+        if (conversation == null)
         {
-            Id = _snowflakeId.Get(),
-            Buyer = buyer,
-            Seller = item.User,
-            Item = item
-        };
+            var buyer = _dbContext.Users.Find(buyerId);
+            if(buyer == null)
+                throw Failure.Unauthorized();
+            
+            var item = _dbContext.Items.Include(x => x.User).FirstOrDefault(x => x.Id == itemId);
+            if(item == null)
+                throw Failure.BadRequest();
 
-        _dbContext.Add(conversation);
+            conversation = Conversation.New(buyer, item);
 
-        _dbContext.SaveChanges();
+            _dbContext.Add(conversation);
+
+            _dbContext.SaveChanges();
+        }
+        else
+        {
+            _dbContext.Entry(conversation).Reference(x => x.Buyer).Load();
+            _dbContext.Entry(conversation).Reference(x => x.Item).Load();
+            _dbContext.Entry(conversation.Item).Reference(x => x.User).Load();
+        }
 
         return conversation;
     }

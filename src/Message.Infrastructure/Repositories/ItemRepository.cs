@@ -2,6 +2,7 @@ using Message.Domain.Entities;
 using Message.Domain.Repositories;
 using Message.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Po.Api.Response;
 
 namespace Message.Infrastructure.Repositories;
 
@@ -13,12 +14,15 @@ public class ItemRepository : IItemRepository
     {
         _dbContext = dbContext;
     }
-
-    public List<Item> Get(long[] ids)
+    
+    public Item Get(long id)
     {
-        return _dbContext.Items
-            .Where(x => ids.Contains(x.Id))
-            .Include(x => x.User)
-            .ToList();
+        var item = _dbContext.Items.Find(id);
+        if(item == null)
+            throw Failure.BadRequest(title: "商品鏈結不存在");
+        
+        _dbContext.Entry(item).Reference(x => x.User).Load();
+        
+        return item;
     }
 }

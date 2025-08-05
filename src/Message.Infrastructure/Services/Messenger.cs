@@ -6,6 +6,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Message.Application.Models;
 using Message.Application.Services;
+using Message.Domain.Entities;
 using Message.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,41 +15,19 @@ namespace Message.Infrastructure.Services;
 internal class Messenger : IMessenger
 {
     private readonly SnowflakeId _snowflake;
-    private readonly ConcurrentDictionary<long, WebSocket> _sockets;
-    private readonly ConcurrentDictionary<long, List<WebSocket>> _conversations;
+    private readonly ConcurrentDictionary<string, List<WebSocket>> _conversations;
     
     
     private readonly IServiceScopeFactory _scopeFactory;
     
     public Messenger(SnowflakeId snowflake, IServiceScopeFactory scopeFactory)
     {
-        _sockets = [];
         _conversations = [];
         _snowflake = snowflake;
         _scopeFactory = scopeFactory;
     }
     
-    public async Task RunAsync(WebSocket socket, long userId)
-    {
-        // processing -
-        //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
-        var success = false;
-        for (var i = 0; i < 3; i++)
-        {
-            success = _sockets.TryAdd(userId, socket);
-            if (success) 
-                break;
-            Thread.Sleep(100);
-        }
-
-        if (success)
-        {
-            // 跑邏輯
-            await _runAsync(socket, userId);
-        }
-    }
-
-    public async Task ConversationRunAsync(WebSocket socket, long conversationId)
+    public async Task RunAsync(WebSocket socket, long userId, long buyerId, long itemId)
     {
         // processing -
         //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
@@ -58,13 +37,13 @@ internal class Messenger : IMessenger
             // 對話是否存在記憶體中
             var sockets = (
                 from x in _conversations 
-                where x.Key == conversationId 
+                where x.Key == $"{buyerId}/{itemId}" 
                 select x.Value).FirstOrDefault();
 
             // 將 socket 加入對話中
             if (sockets == null)
             {
-                success = _conversations.TryAdd(conversationId, new List<WebSocket>());
+                success = _conversations.TryAdd($"{buyerId}/{itemId}", new List<WebSocket> { socket });
             }
             else
             {
@@ -82,211 +61,116 @@ internal class Messenger : IMessenger
         if (success)
         {
             // 跑邏輯
-            await _convRunAsync(socket, conversationId);
+            await _runAsync(
+                socket: socket, 
+                userId: userId, 
+                buyerId: buyerId, 
+                itemId: itemId);
         }
     }
 
-    private async Task _convRunAsync(WebSocket socket, long userId)
+    private async Task _runAsync(WebSocket socket, long userId, long buyerId, long itemId)
     {
-        var buffer = ArrayPool<byte>.Shared.Rent(1024 * 4);
-        
-        try
-        {
-            while (socket.State == WebSocketState.Open)
-            {
-                // processing - 解收 socket 傳來的訊息
-                var request = await socket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), 
-                    CancellationToken.None);
-
-                // condition - 如果是文字訊息，就處理，並發送給其他使用者
-                if (request.MessageType == WebSocketMessageType.Text)
-                {
-                    var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
-                    
-                    var retrievedMsg = JsonSerializer.Deserialize<RetrievedMessageDto>(content);
-                    if (retrievedMsg == null)
-                        continue;
-                    
-                    var submittedMsg = retrievedMsg.ToSubmittedMessage(id: _snowflake.Get(), userId: userId);
-                    
-                    await _convSendMessageAsync(submittedMsg);
-                }
-                // condition - 如果是 close 幀，就關閉 web socket
-                else if (request.MessageType == WebSocketMessageType.Close)
-                {
-                    await socket.CloseAsync(
-                        request.CloseStatus!.Value, 
-                        request.CloseStatusDescription,
-                        CancellationToken.None);
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-            _remove(userId);
-        }
-        
-    }
-    private async Task _runAsync(WebSocket socket, long userId)
-    {
-        var buffer = ArrayPool<byte>.Shared.Rent(1024 * 4);
-
-        try
-        {
-            while (socket.State == WebSocketState.Open)
-            {
-                // processing - 解收 socket 傳來的訊息
-                var request = await socket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), 
-                    CancellationToken.None);
-
-                // condition - 如果是文字訊息，就處理，並發送給其他使用者
-                if (request.MessageType == WebSocketMessageType.Text)
-                {
-                    var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
-                    var retrievedMsg = JsonSerializer.Deserialize<RetrievedMessageDto>(content);
-                    if (retrievedMsg == null)
-                        continue;
-                    var submittedMsg = retrievedMsg.ToSubmittedMessage(id: _snowflake.Get(), userId: userId);
-                    await _sendMessageAsync(submittedMsg);
-                    await _replySuccess(submittedMsg);
-                }
-                // condition - 如果是 close 幀，就關閉 web socket
-                else if (request.MessageType == WebSocketMessageType.Close)
-                {
-                    await socket.CloseAsync(
-                        request.CloseStatus!.Value, 
-                        request.CloseStatusDescription,
-                        CancellationToken.None);
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-            _remove(userId);
-        }
-    }
-    
-    private void _remove(long userId)
-    {
-        for (var i = 0; i < 3; i++)
-        {
-            if (_sockets.TryRemove(userId, out _)) 
-                break;
-            Thread.Sleep(100);
-        }
-    }
-
-    /// <summary>
-    /// 回應傳訊者，標示訊息成功傳遞了
-    /// </summary>
-    /// <param name="msg"></param>
-    private async Task _replySuccess(SubmittedMessageDto msg)
-    {
-        var socket = (
-            from x in _sockets 
-            where x.Key == msg.From 
-            select x.Value).FirstOrDefault();
-
-        if (socket is not null)
-        {
-            var content = JsonSerializer.Serialize(msg.ToSuccess(), new JsonSerializerOptions()
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-            var body    = Encoding.UTF8.GetBytes(content);
-
-            // processing - 向系統租用一塊記憶體空間
-            var pool = ArrayPool<byte>.Shared;
-            var buffer  = pool.Rent(body.Length);
-            
-            // processing - 將訊息放入剛剛租用的記憶體空間內
-            body.CopyTo(buffer,0);
-            var segment = new ArraySegment<byte>(buffer, 0, body.Length);
-            
-            // processing - 發送消息
-            if (socket.State == WebSocketState.Open)
-            {
-                await socket.SendAsync(
-                    segment, 
-                    WebSocketMessageType.Text, 
-                    endOfMessage: true,
-                    CancellationToken.None);
-            }
-            
-            // processing - 向系統歸還一塊記憶體空間
-            pool.Return(buffer);
-        }
-    }
-    
-    
-    /// <summary>
-    /// 傳送訊息
-    /// </summary>
-    /// <param name="submittedMessage"></param>
-    private async Task _sendMessageAsync(SubmittedMessageDto submittedMessage)
-    {
-        var socket = (
-            from x in _sockets 
-            where x.Key == submittedMessage.To 
-            select x.Value).FirstOrDefault();
-
-        if (socket is not null)
-        {
-            var content = JsonSerializer.Serialize(submittedMessage, new JsonSerializerOptions()
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-            var body    = Encoding.UTF8.GetBytes(content);
-
-            // processing - 向系統租用一塊記憶體空間
-            var pool = ArrayPool<byte>.Shared;
-            var buffer  = pool.Rent(body.Length);
-            
-            // processing - 將訊息放入剛剛租用的記憶體空間內
-            body.CopyTo(buffer,0);
-            var segment = new ArraySegment<byte>(buffer, 0, body.Length);
-            
-            // processing - 發送消息
-            if (socket.State == WebSocketState.Open)
-            {
-                await socket.SendAsync(
-                    segment, 
-                    WebSocketMessageType.Text, 
-                    endOfMessage: true,
-                    CancellationToken.None);
-            }
-            
-            // processing - 向系統歸還一塊記憶體空間
-            pool.Return(buffer);
-        }
-        
-        // description - 儲存訊息
+        Item item;
         using (var scope = _scopeFactory.CreateScope())
         {
-            var note = submittedMessage.ToDomain(isRead: socket is not null);
-            var noteRepo = scope.ServiceProvider.GetService<INoteRepository>();
-            noteRepo?.Add(note);
+            var itemRepo = scope.ServiceProvider.GetService<IItemRepository>();
+            if(itemRepo == null) throw new Exception();
+            item = itemRepo.Get(itemId);
         }
+        
+        var buffer = ArrayPool<byte>.Shared.Rent(1024 * 4);
+        
+        try
+        {
+            while (socket.State == WebSocketState.Open)
+            {
+                // processing - 解收 socket 傳來的訊息
+                var request = await socket.ReceiveAsync(
+                    new ArraySegment<byte>(buffer), 
+                    CancellationToken.None);
+
+                // condition - 如果是文字訊息，就處理，並發送給其他使用者
+                if (request.MessageType == WebSocketMessageType.Text)
+                {
+                    var content = Encoding.UTF8.GetString(buffer, 0, request.Count);
+                    
+                    var frame = JsonSerializer.Deserialize<FrameModel>(content);
+                    if (frame == null)
+                        continue;
+                    
+                    await _SendMessageAsync(
+                        frame: frame,
+                        userId: userId,
+                        buyerId: buyerId, 
+                        itemId: itemId,
+                        sellerId: item.User.Id);
+                }
+                // condition - 如果是 close 幀，就關閉 web socket
+                else if (request.MessageType == WebSocketMessageType.Close)
+                {
+                    await socket.CloseAsync(
+                        request.CloseStatus!.Value, 
+                        request.CloseStatusDescription,
+                        CancellationToken.None);
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+            _removeSocket(socket, buyerId, itemId);
+        }
+        
     }
-    
-    /// <summary>
-    /// 傳送訊息
-    /// </summary>
-    /// <param name="submittedMessage"></param>
-    private async Task _convSendMessageAsync(SubmittedMessageDto submittedMessage)
+
+    private void _removeSocket(WebSocket socket, long buyerId, long itemId)
     {
         var sockets = (
             from x in _conversations 
-            where x.Key == submittedMessage.To 
+            where x.Key == $"{buyerId}/{itemId}" 
+            select x.Value).FirstOrDefault();
+
+        sockets?.Remove(socket);
+
+        if (sockets?.Count == 0)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                if (_conversations.TryRemove($"{buyerId}/{itemId}", out var _))
+                    break;
+                Thread.Sleep(100);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 傳送訊息
+    /// </summary>
+    /// <param name="frame"></param>
+    /// <param name="userId"></param>
+    /// <param name="buyerId"></param>
+    /// <param name="itemId"></param>
+    /// <param name="sellerId"></param>
+    private async Task _SendMessageAsync(FrameModel frame, long userId, long buyerId, long itemId, long sellerId)
+    {
+        var messageId = _snowflake.Get();
+        
+        var sockets = (
+            from x in _conversations 
+            where x.Key == $"{buyerId}/{itemId}"
             select x.Value).FirstOrDefault();
 
         if (sockets is not null)
         {
-            var content = JsonSerializer.Serialize(submittedMessage, new JsonSerializerOptions()
+            var message = frame.ToMessageModel(
+                id: messageId,
+                userId: userId,
+                buyerId: buyerId,
+                itemId: itemId,
+                sellerId: sellerId);
+            
+            var content = JsonSerializer.Serialize(message, new JsonSerializerOptions()
             {
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
@@ -320,7 +204,13 @@ internal class Messenger : IMessenger
         // description - 儲存訊息
         using (var scope = _scopeFactory.CreateScope())
         {
-            var note = submittedMessage.ToDomain(isRead: sockets != null && sockets.Count > 1);
+            var note = frame.ToDomain(                
+                id: messageId,
+                userId: userId,
+                buyerId: buyerId,
+                itemId: itemId,
+                sellerId: sellerId,
+                isRead: sockets != null && sockets.Count > 1);
             var noteRepo = scope.ServiceProvider.GetService<INoteRepository>();
             noteRepo?.Add(note);
         }

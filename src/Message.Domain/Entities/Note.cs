@@ -6,11 +6,6 @@ public class Note
     /// 訊息 ID
     /// </summary>
     public long Id { get; set; }
-
-    /// <summary>
-    /// 對話 ID
-    /// </summary>
-    public long ConversationId { get; set; }
     
     /// <summary>
     /// 發送者 ID
@@ -41,4 +36,19 @@ public class Note
     /// 讀取時間
     /// </summary>
     public DateTimeOffset? ReadAt { get; set; }
+    
+    /// <summary>
+    /// Navigation Property 對話
+    /// </summary>
+    public Conversation Conversation { get; set; }
+
+    /// <summary>
+    /// Foreign Key 買家
+    /// </summary>
+    public long BuyerId { get; set; }
+    
+    /// <summary>
+    /// Foreign Key 商品鏈結
+    /// </summary>
+    public long ItemId { get; set; }
 }

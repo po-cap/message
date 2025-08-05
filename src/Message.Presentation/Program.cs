@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Message.Application;
-using Message.Application.Commands;
+using Message.Application.Models;
 using Message.Application.Services;
 using Message.Domain.Repositories;
 using Message.Infrastructure;
@@ -117,9 +117,9 @@ app.UseAuthorization();
 app.UseWebSockets();
 
 
-app.MapPost("/conversation", async (
+app.MapPost("/conversation", (
     HttpContext ctx, 
-    IMediator mediator, 
+    IConversationRepository repository,
     long itemId) =>
 {
     var sub = ctx.User.FindFirst("sub")?.Value;
@@ -129,15 +129,9 @@ app.MapPost("/conversation", async (
     if(!long.TryParse(sub, out var userId))
         throw Failure.Unauthorized();
     
-    var command = new StartConversationCommand()
-    {
-        BuyerId = userId,
-        ItemId = itemId,
-    };
-
-    var conversation = await mediator.SendAsync(command);
-
-    return Results.Ok(conversation);
+    var conversation = repository.Add(buyerId: userId, itemId: itemId);
+    
+    return Results.Ok(conversation.ToModel(userId));
 }).RequireAuthorization();
 
 app.MapGet("/conversation", (
@@ -153,13 +147,14 @@ app.MapGet("/conversation", (
 
     var conversations = repository.Get(userId);
     
-    return Results.Ok(conversations);
+    return Results.Ok(conversations.Select(x => x.ToModel(userId)));
 }).RequireAuthorization();
 
-app.MapGet("/conversation/{conversationId:long}", (
+app.MapGet("/conversation/{buyerId:long}/{itemId:long}", (
     HttpContext ctx, 
-    INoteRepository repository,
-    long conversationId) =>
+    IConversationRepository repository,
+    long buyerId,
+    long itemId) =>
 {
     var sub = ctx.User.FindFirst("sub")?.Value;
     if(sub == null)
@@ -168,13 +163,21 @@ app.MapGet("/conversation/{conversationId:long}", (
     if(!long.TryParse(sub, out var userId))
         throw Failure.Unauthorized();
 
-    var msgs = repository.Get(userId, conversationId);
+    var conversation = repository.Get(buyerId, itemId);
+    
+    if(userId != buyerId && userId != conversation.Item.User.Id)
+        throw Failure.Unauthorized();
 
-    return Results.Ok(msgs);
+    return Results.Ok(conversation.ToModel(userId));
 
 }).RequireAuthorization();
 
-app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
+
+app.MapGet("/chat/{buyerId:long}/{itemId:long}", async (
+    HttpContext ctx, 
+    IMessenger messenger,
+    long buyerId,
+    long itemId) =>
 {
     if (!ctx.User.Identity?.IsAuthenticated ?? true)
     {
@@ -191,14 +194,15 @@ app.MapGet("/chat", async (HttpContext ctx, IMessenger messenger) =>
         if(!long.TryParse(sub, out var userId))
             throw Failure.Unauthorized();
         
-        // processing - 取得 Json Web Token
-        var token = ctx.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        
         // processing - 取得 WebSocket
         using var socket = await ctx.WebSockets.AcceptWebSocketAsync();
         
         // processing - 跑 WebSocket 處理邏輯
-        await messenger.RunAsync(socket:socket, userId: userId);
+        await messenger.RunAsync(
+            socket:socket, 
+            buyerId: buyerId,
+            itemId: itemId,
+            userId: userId);
     }
 }).RequireAuthorization();
 

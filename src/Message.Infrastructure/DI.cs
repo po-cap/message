@@ -46,7 +46,6 @@ public static class DI
 
         // description - repositories
         services.AddScoped<INoteRepository, NoteRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
         services.AddScoped<IConversationRepository, ConversationRepository>();
 
