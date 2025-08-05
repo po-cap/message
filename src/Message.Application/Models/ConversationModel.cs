@@ -42,7 +42,7 @@ public class ConversationModel
     /// <summary>
     /// 未讀訊息
     /// </summary>
-    public IEnumerable<MessageModel> Messages { get; set; }
+    public IEnumerable<MessageModel> UnreadMessages { get; set; }
 }
 
 public static partial class MapExtension
@@ -61,7 +61,7 @@ public static partial class MapExtension
             LastMessageType = lastNote?.Type,
             LastMessage = lastNote?.Content,
             IsBuyer = entity.Buyer.Id == userId,
-            Messages = notes.Select(x => x.ToModel())
+            UnreadMessages = notes.Select(x => x.ToModel())
         };
     }
 } 
