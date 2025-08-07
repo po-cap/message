@@ -6,6 +6,8 @@ using Message.Application.Models;
 using Message.Application.Services;
 using Message.Domain.Repositories;
 using Message.Infrastructure;
+using Message.Infrastructure.Queries;
+using Message.Presentation.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -97,6 +99,10 @@ builder.Services
        .AddApplication()
        .AddInfrastructure(builder.Configuration);
 
+builder.Services.ConfigureHttpJsonOptions(o =>
+{
+    o.SerializerOptions.Converters.Add(new UnixMillisToDateTimeOffsetConverter());
+});
 
 
 var app = builder.Build();
@@ -117,82 +123,52 @@ app.UseAuthorization();
 app.UseWebSockets();
 
 
-app.MapPost("/conversation", (
+
+app.MapGet("/conversation", async (
     HttpContext ctx, 
-    IConversationRepository repository,
-    long itemId) =>
+    IMediator mediator) =>
 {
-    var sub = ctx.User.FindFirst("sub")?.Value;
-    if(sub == null)
-        throw Failure.Unauthorized();
-    
-    if(!long.TryParse(sub, out var userId))
-        throw Failure.Unauthorized();
-    
-    var conversation = repository.Add(buyerId: userId, itemId: itemId);
-    
-    return Results.Ok(conversation.ToModel(userId));
-}).RequireAuthorization();
+    var userId = ctx.UserID();
 
-app.MapGet("/conversation", (
-    HttpContext ctx, 
-    IConversationRepository repository) =>
-{
-    var sub = ctx.User.FindFirst("sub")?.Value;
-    if(sub == null)
-        throw Failure.Unauthorized();
-    
-    if(!long.TryParse(sub, out var userId))
-        throw Failure.Unauthorized();
+    var room = await mediator.SendAsync(new GetChatRoomsQuery
+    {
+        UserId = userId
+    });
 
-    var conversations = repository.Get(userId);
-    
-    return Results.Ok(conversations.Select(x => x.ToModel(userId)));
-}).RequireAuthorization();
-
-app.MapGet("/conversation/{buyerId:long}/{itemId:long}", (
-    HttpContext ctx, 
-    IConversationRepository repository,
-    long buyerId,
-    long itemId) =>
-{
-    var sub = ctx.User.FindFirst("sub")?.Value;
-    if(sub == null)
-        throw Failure.Unauthorized();
-    
-    if(!long.TryParse(sub, out var userId))
-        throw Failure.Unauthorized();
-
-    var conversation = repository.Get(buyerId, itemId);
-    
-    if(userId != buyerId && userId != conversation.Item.User.Id)
-        throw Failure.Unauthorized();
-
-    return Results.Ok(conversation.ToModel(userId));
-
+    return Results.Ok(room);
 }).RequireAuthorization();
 
 
 app.MapGet("/chat/{buyerId:long}/{itemId:long}", async (
     HttpContext ctx, 
+    IMediator mediator,
+    long buyerId,
+    long itemId) =>
+{
+    var userId = ctx.UserID();
+
+    var room = await mediator.SendAsync(new GetChatRoomQuery
+    {
+        BuyerId = buyerId,
+        ItemId = itemId,
+        UserId = userId
+    });
+
+    return Results.Ok(room);
+
+}).RequireAuthorization();
+
+
+
+app.MapGet("/ws/chat/{buyerId:long}/{itemId:long}", async (
+    HttpContext ctx, 
     IMessenger messenger,
     long buyerId,
     long itemId) =>
 {
-    if (!ctx.User.Identity?.IsAuthenticated ?? true)
-    {
-        ctx.Response.StatusCode = 401;
-        return;
-    }
-        
     if (ctx.WebSockets.IsWebSocketRequest)
     {
-        var sub = ctx.User.FindFirst("sub")?.Value;
-        if(sub == null)
-            throw Failure.Unauthorized();
-    
-        if(!long.TryParse(sub, out var userId))
-            throw Failure.Unauthorized();
+        var userId = ctx.UserID();
         
         // processing - 取得 WebSocket
         using var socket = await ctx.WebSockets.AcceptWebSocketAsync();

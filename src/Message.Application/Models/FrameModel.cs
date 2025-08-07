@@ -18,7 +18,7 @@ public class FrameModel
     /// 訊息類型
     /// </summary>
     [JsonPropertyName("type")]
-    public DataType Type { get; set; }
+    public NoteType Type { get; set; }
 }
 
 
@@ -31,12 +31,14 @@ public static partial class MapExtension
     /// <param name="id">訊息的 ID</param>
     /// <param name="userId">傳訊者的 ID</param>
     /// <param name="buyerId">買家 ID</param>
+    /// <param name="sellerId">賣家 ID</param>
     /// <returns></returns>
     public static MessageModel ToMessageModel(
         this FrameModel msg, 
         long id, 
         long userId,
-        long buyerId)
+        long buyerId,
+        long sellerId)
     {
         var isBuyer = userId == buyerId;
         
@@ -44,7 +46,7 @@ public static partial class MapExtension
         return new MessageModel()
         {           
             Id = id,
-            From = userId,
+            To = isBuyer ? sellerId : buyerId,
             Type = msg.Type,
             Content = msg.Content,
         };
@@ -68,7 +70,6 @@ public static partial class MapExtension
             BuyerId = buyerId,
             ItemId = itemId,
             
-            SenderId = isBuyer ? buyerId : sellerId,
             ReceiverId = isBuyer ? sellerId : buyerId,
             
             Type = data.Type,

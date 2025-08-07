@@ -16,12 +16,7 @@ public class AppDbContext : DbContext
     /// 商品
     /// </summary>
     public DbSet<Item> Items { get; set; }
-
-    /// <summary>
-    /// 對話
-    /// </summary>
-    public DbSet<Conversation> Conversations { get; set; }
-
+    
     /// <summary>
     /// 使用者
     /// </summary>
@@ -33,7 +28,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<User>(config);
         modelBuilder.ApplyConfiguration<Note>(config);
         modelBuilder.ApplyConfiguration<Item>(config);
-        modelBuilder.ApplyConfiguration<Conversation>(config);
     }
     
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

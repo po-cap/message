@@ -152,7 +152,12 @@ internal class Messenger : IMessenger
     /// <param name="buyerId"></param>
     /// <param name="itemId"></param>
     /// <param name="sellerId"></param>
-    private async Task _SendMessageAsync(FrameModel frame, long userId, long buyerId, long itemId, long sellerId)
+    private async Task _SendMessageAsync(
+        FrameModel frame, 
+        long userId, 
+        long buyerId, 
+        long itemId, 
+        long sellerId)
     {
         var messageId = _snowflake.Get();
         
@@ -166,7 +171,8 @@ internal class Messenger : IMessenger
             var message = frame.ToMessageModel(
                 id: messageId,
                 userId: userId,
-                buyerId: buyerId);
+                buyerId: buyerId,
+                sellerId: sellerId);
             
             var content = JsonSerializer.Serialize(message, new JsonSerializerOptions()
             {

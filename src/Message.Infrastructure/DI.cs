@@ -7,6 +7,7 @@ using Message.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Mediator;
 
 namespace Message.Infrastructure;
 
@@ -26,7 +27,7 @@ public static class DI
         {
             opts.UseNpgsql(config.GetConnectionString("Main"), o =>
             {
-                o.MapEnum<DataType>("message_type");
+                o.MapEnum<NoteType>("message_type");
             });
         });
         
@@ -47,13 +48,15 @@ public static class DI
         // description - repositories
         services.AddScoped<INoteRepository, NoteRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
-        services.AddScoped<IConversationRepository, ConversationRepository>();
 
         // description - 使用者 Repository 使用了 Http Client
         services.AddHttpClient<AuthClient>(client =>
         {
             client.BaseAddress = new Uri($"{config["OIDC"]}");
         });
+        
+        // 加入中介者
+        services.AddMediator();
         
         return services;
     }

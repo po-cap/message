@@ -8,11 +8,6 @@ public class Note
     public long Id { get; set; }
     
     /// <summary>
-    /// 發送者 ID
-    /// </summary>
-    public long SenderId { get; set; }
-
-    /// <summary>
     /// 接收者 ID
     /// </summary>
     public long ReceiverId { get; set; }
@@ -20,7 +15,7 @@ public class Note
     /// <summary>
     /// 訊息類型
     /// </summary>
-    public DataType Type { get; set; }
+    public NoteType Type { get; set; }
 
     /// <summary>
     /// 內容
@@ -38,17 +33,22 @@ public class Note
     public DateTimeOffset? ReadAt { get; set; }
     
     /// <summary>
-    /// Navigation Property 對話
-    /// </summary>
-    public Conversation Conversation { get; set; }
-
-    /// <summary>
-    /// Foreign Key 買家
+    /// ForeignKey - 買家 ID
     /// </summary>
     public long BuyerId { get; set; }
     
     /// <summary>
-    /// Foreign Key 商品鏈結
+    /// Navigation Property - 買家
+    /// </summary>
+    public User Buyer { get; set; }
+    
+    /// <summary>
+    /// ForeignKey - 商品鏈結 ID
     /// </summary>
     public long ItemId { get; set; }
+    
+    /// <summary>
+    /// Navigation Property - 商品鏈結
+    /// </summary>
+    public Item Item { get; set; }
 }

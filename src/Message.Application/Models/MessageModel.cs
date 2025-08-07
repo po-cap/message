@@ -15,10 +15,10 @@ public struct MessageModel
     public long Id { get; set; }
     
     ///// <summary>
-    ///// 發訊者
+    ///// 收訊者
     ///// </summary>
-    [JsonPropertyName("from")]
-    public long From { get; set; }
+    [JsonPropertyName("to")]
+    public long To { get; set; }
 
     /// <summary>
     /// 訊息內容
@@ -30,18 +30,23 @@ public struct MessageModel
     /// 訊息類型
     /// </summary>
     [JsonPropertyName("type")]
-    public DataType Type { get; set; }
+    public NoteType Type { get; set; }
+
+    /// <summary>
+    /// 狀態: 0 表示沒有異常
+    /// </summary>
+    [JsonPropertyName("status")]
+    public int Status { get; set; }
 }
 
 public static partial class MapExtension
 {
-    
     public static MessageModel ToModel(this Note note)
     {
         return new MessageModel()
         {
             Id = note.Id,
-            From = note.SenderId,
+            To = note.ReceiverId,
             Content = note.Content,
             Type = note.Type,
         };

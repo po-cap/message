@@ -1,6 +1,6 @@
 namespace Message.Domain.Entities;
 
-public enum DataType
+public enum NoteType
 {
     /// <summary>
     /// 傳送成功訊號
