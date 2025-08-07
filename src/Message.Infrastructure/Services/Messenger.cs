@@ -172,7 +172,8 @@ internal class Messenger : IMessenger
                 id: messageId,
                 userId: userId,
                 buyerId: buyerId,
-                sellerId: sellerId);
+                sellerId: sellerId,
+                itemId: itemId);
             
             var content = JsonSerializer.Serialize(message, new JsonSerializerOptions()
             {

@@ -32,13 +32,15 @@ public static partial class MapExtension
     /// <param name="userId">傳訊者的 ID</param>
     /// <param name="buyerId">買家 ID</param>
     /// <param name="sellerId">賣家 ID</param>
+    /// <param name="itemId">商品鏈結 ID</param>
     /// <returns></returns>
     public static MessageModel ToMessageModel(
         this FrameModel msg, 
         long id, 
         long userId,
         long buyerId,
-        long sellerId)
+        long sellerId,
+        long itemId)
     {
         var isBuyer = userId == buyerId;
         
@@ -46,9 +48,11 @@ public static partial class MapExtension
         return new MessageModel()
         {           
             Id = id,
+            Uri = $"{buyerId}/{itemId}",
             ReceiverId = isBuyer ? sellerId : buyerId,
             Type = msg.Type,
             Content = msg.Content,
+            Status = 0
         };
     }
     
