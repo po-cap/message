@@ -62,7 +62,7 @@ public class GetChatRoomsHandler : IRequestHandler<GetChatRoomsQuery, IEnumerabl
                 UnreadCount = notes.Count(),
                 LastMessageType = lastNote.Type,
                 LastMessage = lastNote.Content,
-                UpdateAt = lastNote.ReadAt
+                UpdateAt = lastNote.CreatedAt
             };
         });
 
