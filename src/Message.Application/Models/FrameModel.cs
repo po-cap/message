@@ -46,7 +46,7 @@ public static partial class MapExtension
         return new MessageModel()
         {           
             Id = id,
-            To = isBuyer ? sellerId : buyerId,
+            ReceiverId = isBuyer ? sellerId : buyerId,
             Type = msg.Type,
             Content = msg.Content,
         };

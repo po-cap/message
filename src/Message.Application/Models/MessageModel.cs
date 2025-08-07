@@ -17,8 +17,8 @@ public struct MessageModel
     ///// <summary>
     ///// 收訊者
     ///// </summary>
-    [JsonPropertyName("to")]
-    public long To { get; set; }
+    [JsonPropertyName("receiverId")]
+    public long ReceiverId { get; set; }
 
     /// <summary>
     /// 訊息內容
@@ -46,7 +46,7 @@ public static partial class MapExtension
         return new MessageModel()
         {
             Id = note.Id,
-            To = note.ReceiverId,
+            ReceiverId = note.ReceiverId,
             Content = note.Content,
             Type = note.Type,
         };
