@@ -34,13 +34,15 @@ public class GetChatRoomsHandler : IRequestHandler<GetChatRoomsQuery, IEnumerabl
 
         var items = _context.Items
             .Include(x => x.User)
-            .Where(x => itemIds.Contains(x.Id));
+            .Where(x => itemIds.Contains(x.Id))
+            .ToList();
 
         // processing - 
         var buyerIds = unreadMessages.Select(x => x.BuyerId).Distinct();
 
         var buyers = _context.Users
-            .Where(x => buyerIds.Contains(x.Id));
+            .Where(x => buyerIds.Contains(x.Id))
+            .ToList();
             
         // processing - 
         var chatRooms = unreadMessages.GroupBy(x => new { x.BuyerId, x.ItemId }).Select((notes) =>

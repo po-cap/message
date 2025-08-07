@@ -2,9 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Message.Application;
-using Message.Application.Models;
 using Message.Application.Services;
-using Message.Domain.Repositories;
 using Message.Infrastructure;
 using Message.Infrastructure.Queries;
 using Message.Presentation.Utilities;
@@ -124,7 +122,7 @@ app.UseWebSockets();
 
 
 
-app.MapGet("/conversation", async (
+app.MapGet("/chat", async (
     HttpContext ctx, 
     IMediator mediator) =>
 {

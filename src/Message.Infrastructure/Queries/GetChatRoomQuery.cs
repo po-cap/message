@@ -7,7 +7,7 @@ using Shared.Mediator.Interface;
 
 namespace Message.Infrastructure.Queries;
 
-public class GetChatRoomQuery : IRequest<ChatroomModel>
+public class GetChatRoomQuery : IRequest<SummaryModel>
 {
     /// <summary>
     /// 買家
@@ -25,7 +25,7 @@ public class GetChatRoomQuery : IRequest<ChatroomModel>
     public required long UserId { get; set; }
 }
 
-public class GetChatRoomHandler : IRequestHandler<GetChatRoomQuery,ChatroomModel>
+public class GetChatRoomHandler : IRequestHandler<GetChatRoomQuery,SummaryModel>
 {
     private readonly AppDbContext _context;
 
@@ -34,7 +34,7 @@ public class GetChatRoomHandler : IRequestHandler<GetChatRoomQuery,ChatroomModel
         _context = context;
     }
     
-    public Task<ChatroomModel> HandleAsync(GetChatRoomQuery request)
+    public Task<SummaryModel> HandleAsync(GetChatRoomQuery request)
     {
         // variables -
         //     unreadMessages: 此聊天室的未讀訊息
@@ -46,7 +46,7 @@ public class GetChatRoomHandler : IRequestHandler<GetChatRoomQuery,ChatroomModel
                                     x.BuyerId == request.BuyerId && 
                                     x.ItemId == request.ItemId && 
                                     x.ReadAt == null)
-                                .OrderByDescending(x => x.CreatedAt)
+                                .OrderBy(x => x.CreatedAt)
                                 .ToList();
         var item           = _context.Items.Include(x => x.User).First(x => x.Id == request.ItemId);
         var buyer          = _context.Users.First(x => x.Id == request.BuyerId);
@@ -60,12 +60,23 @@ public class GetChatRoomHandler : IRequestHandler<GetChatRoomQuery,ChatroomModel
             Title = isBuyer ? item.User.DisplayName : buyer.DisplayName,
             Avatar = isBuyer ? item.User.Avatar : buyer.Avatar,
             Photo = item.Albums[0],
-            UnreadCount = unreadMessages.Count,
-            LastMessageType = unreadMessages.Last().Type,
-            LastMessage = unreadMessages.Last().Content,
-            UpdateAt = unreadMessages.Last().CreatedAt,
+            UnreadCount = unreadMessages?.Count ?? 0,
+            LastMessageType = unreadMessages?.LastOrDefault()?.Type,
+            LastMessage = unreadMessages?.LastOrDefault()?.Content,
+            UpdateAt = unreadMessages?.LastOrDefault()?.CreatedAt,
         };
 
-        return Task.FromResult(chatRoom);
+        var now = DateTimeOffset.Now;
+        foreach (var message in unreadMessages ?? [])
+        {
+            message.ReadAt = now;
+        }
+        _context.SaveChanges();
+
+        return Task.FromResult(new SummaryModel()
+        {
+            Chatroom = chatRoom,
+            Messages = unreadMessages.Select(x => x.ToModel()) ?? []
+        });
     }
 }
