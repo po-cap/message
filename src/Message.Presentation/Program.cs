@@ -158,11 +158,9 @@ app.MapGet("/chat/{buyerId:long}/{itemId:long}", async (
 
 
 
-app.MapGet("/ws/chat/{buyerId:long}/{itemId:long}", async (
+app.MapGet("/ws/chat", async (
     HttpContext ctx, 
-    IMessenger messenger,
-    long buyerId,
-    long itemId) =>
+    IMessenger messenger) =>
 {
     if (ctx.WebSockets.IsWebSocketRequest)
     {
@@ -174,8 +172,6 @@ app.MapGet("/ws/chat/{buyerId:long}/{itemId:long}", async (
         // processing - 跑 WebSocket 處理邏輯
         await messenger.RunAsync(
             socket:socket, 
-            buyerId: buyerId,
-            itemId: itemId,
             userId: userId);
     }
 }).RequireAuthorization();

@@ -18,4 +18,17 @@ public class NoteRepository : INoteRepository
         _context.Notes.Add(note);
         _context.SaveChanges();
     }
+    
+    public void SetRead(IEnumerable<long> ids)
+    {
+        var notes = _context.Notes.Where(x => ids.Contains(x.Id)).ToList();
+
+        var now = DateTimeOffset.Now;
+        foreach (var note in notes)
+        {
+            note.ReadAt = now;
+        }
+
+        _context.SaveChanges();
+    }
 }

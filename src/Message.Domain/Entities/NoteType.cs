@@ -3,9 +3,9 @@ namespace Message.Domain.Entities;
 public enum NoteType
 {
     /// <summary>
-    /// 傳送成功訊號
+    /// Ping Pong
     /// </summary>
-    success = 0,
+    ping = 0,
     
     /// <summary>
     /// 文字訊息
@@ -26,4 +26,19 @@ public enum NoteType
     /// 影片
     /// </summary>
     video = 4,
+    
+    /// <summary>
+    /// 進入聊天室
+    /// </summary>
+    join = 5,
+    
+    /// <summary>
+    /// 退出聊天室
+    /// </summary>
+    exit = 6,
+    
+    /// <summary>
+    /// 通知服務器訊息已讀過
+    /// </summary>
+    read = 7,
 }

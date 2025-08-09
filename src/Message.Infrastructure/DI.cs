@@ -38,10 +38,11 @@ public static class DI
         });
         
         // description - Message Mediator
-        services.AddSingleton<IMessenger, Messenger>();
+        services.AddScoped<IMessenger, Messenger>();
+        services.AddSingleton<IConnection,Connection>();
         
         // description - snowflake id
-        services.AddSingleton<SnowflakeId>(provider => 
+        services.AddSingleton<ISnowFlake>(provider => 
             new SnowflakeId(workerId: 1, datacenterId: 1)
         );
 
@@ -54,6 +55,8 @@ public static class DI
         {
             client.BaseAddress = new Uri($"{config["OIDC"]}");
         });
+        
+        
         
         // 加入中介者
         services.AddMediator();

@@ -1,6 +1,8 @@
+using Message.Application.Services;
+
 namespace Message.Infrastructure.Services;
 
-public class SnowflakeId
+public class SnowflakeId : ISnowFlake
 {
     private const long Twepoch = 1288834974657L; // 起始时间戳（2010-11-04 09:42:54.657 UTC）
 

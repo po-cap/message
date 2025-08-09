@@ -9,4 +9,10 @@ public interface INoteRepository
     /// </summary>
     /// <param name="note"></param>
     void Add(Note note);
+    
+    /// <summary>
+    /// 設置成已讀
+    /// </summary>
+    /// <param name="ids"></param>
+    void SetRead(IEnumerable<long> ids);
 }
