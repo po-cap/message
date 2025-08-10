@@ -91,6 +91,7 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
                 body.CopyTo(buffer,0);
                 var segment = new ArraySegment<byte>(buffer, 0, body.Length);
                 
+                // processing - 傳給聊天對象
                 if (partnerConnection.WebSocket.State == WebSocketState.Open)
                 {
                     await socket.SendAsync(
@@ -99,6 +100,13 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
                         endOfMessage: true,
                         CancellationToken.None);
                 }
+                
+                // processing - 也傳給自己
+                await request.Connection.WebSocket.SendAsync(
+                    segment, 
+                    WebSocketMessageType.Text, 
+                    endOfMessage: true,
+                    CancellationToken.None);
             }
             finally
             {
