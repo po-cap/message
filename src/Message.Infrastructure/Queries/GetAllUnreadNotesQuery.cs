@@ -31,7 +31,12 @@ public class GetAllUnreadNotesHandler : IRequestHandler<GetAllUnreadNotesQuery, 
             .ToList();
         
         //
-        var content = JsonSerializer.Serialize(unreadMessages);
+        var content = JsonSerializer.Serialize(
+            from m in  unreadMessages select m.ToModel(),
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
 
         //
         return Task.FromResult(new MessageModel
