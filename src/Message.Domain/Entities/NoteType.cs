@@ -50,5 +50,10 @@ public enum NoteType
     /// <summary>
     /// 取得未讀訊息
     /// </summary>
-    unread_messages = 9
+    unread_messages = 9,
+    
+    /// <summary>
+    /// 聊天室訊息
+    /// </summary>
+    chatroom
 }

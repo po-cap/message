@@ -120,6 +120,14 @@ internal class Messenger : IMessenger
                             });
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;   
+                        case NoteType.chatroom:
+                            message = await _mediator.SendAsync(new GetRoomQuery
+                            {
+                                Connection = connection,
+                                Uri = content
+                            });
+                            await _replyRequestAsync(connection.WebSocket, message);
+                            break;  
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
