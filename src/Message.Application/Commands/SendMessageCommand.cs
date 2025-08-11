@@ -73,7 +73,7 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
                 Uri = connection.Uri ?? "",
                 ReceiverId = connection.PartnerId?? 0,
                 Content = request.Content,
-                Type = NoteType.text,
+                Type = request.Type,
                 Status = 0
             };
             
