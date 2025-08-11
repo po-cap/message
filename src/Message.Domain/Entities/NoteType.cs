@@ -46,4 +46,9 @@ public enum NoteType
     /// 取得未讀訊息量
     /// </summary>
     unread_count = 8,
+    
+    /// <summary>
+    /// 取得未讀訊息
+    /// </summary>
+    unread_messages = 9
 }

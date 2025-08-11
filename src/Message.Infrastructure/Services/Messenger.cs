@@ -67,6 +67,7 @@ internal class Messenger : IMessenger
                     if (frame == null)
                         continue;
 
+                    MessageModel message;
                     switch (frame.Type)
                     {
                         case NoteType.ping:
@@ -106,12 +107,19 @@ internal class Messenger : IMessenger
                             });
                             break;
                         case NoteType.unread_count:
-                            var message = await _mediator.SendAsync(new GetUnreadCountQuery()
+                            message = await _mediator.SendAsync(new GetUnreadCountQuery()
                             {
                                 Connection = connection
                             });
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;
+                        case NoteType.unread_messages:
+                            message = await _mediator.SendAsync(new GetAllUnreadNotesQuery()
+                            {
+                                Connection = connection
+                            });
+                            await _replyRequestAsync(connection.WebSocket, message);
+                            break;   
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
