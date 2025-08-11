@@ -9,7 +9,7 @@ public class GetAllUnreadNoteQuery : IRequest<IEnumerable<MessageModel>>
     /// <summary>
     /// 使用者 ID
     /// </summary>
-    public long UserId { get; set; }
+    public required long UserId { get; set; }
 }
 
 public class GetAllUnreadNoteHandler : IRequestHandler<GetAllUnreadNoteQuery, IEnumerable<MessageModel>>

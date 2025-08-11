@@ -41,4 +41,9 @@ public enum NoteType
     /// 通知服務器訊息已讀過
     /// </summary>
     read = 7,
+    
+    /// <summary>
+    /// 取得未讀訊息量
+    /// </summary>
+    unread_count = 8,
 }
