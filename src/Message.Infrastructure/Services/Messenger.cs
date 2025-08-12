@@ -45,7 +45,7 @@ internal class Messenger : IMessenger
         {
             if (_connection.Users.TryAdd(userId, connection))
             {
-                _logger.LogDebug($"{userId} 連線成功");
+                _logger.LogInformation($"{userId} 連線成功");
                 success = true;
                 break;
             }
@@ -55,7 +55,7 @@ internal class Messenger : IMessenger
 
         if (!success)
         {
-            _logger.LogDebug($"{userId} 連線失敗");
+            _logger.LogInformation($"{userId} 連線失敗");
             await socket.CloseAsync(
                 WebSocketCloseStatus.InternalServerError,
                 "",
