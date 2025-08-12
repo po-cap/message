@@ -116,6 +116,7 @@ internal class Messenger : IMessenger
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;
                         case NoteType.join:
+                            _logger.LogInformation($"{userId} 進入聊天室");
                             await _mediator.SendAsync(new JoinTheChatCommand
                             {
                                 Connection = connection,
@@ -123,18 +124,21 @@ internal class Messenger : IMessenger
                             });
                             break;
                         case NoteType.exit:
+                            _logger.LogInformation($"{userId} 離開聊天室");
                             await _mediator.SendAsync(new ExitTheChatCommand()
                             {
                                 Connection = connection
                             });
                             break;
                         case NoteType.read:
+                            _logger.LogInformation($"{userId} 讀取訊息");
                             await _mediator.SendAsync(new SetReadCommand()
                             {
                                 Ids = JsonSerializer.Deserialize<List<long>>(frame.Content) ?? []
                             });
                             break;
                         case NoteType.unread_count:
+                            _logger.LogInformation($"{userId} 詢問所未讀訊息量");
                             message = await _mediator.SendAsync(new GetUnreadCountQuery()
                             {
                                 Connection = connection
@@ -142,6 +146,7 @@ internal class Messenger : IMessenger
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;
                         case NoteType.unread_messages:
+                            _logger.LogInformation($"{userId} 詢問所有未讀訊息");
                             message = await _mediator.SendAsync(new GetAllUnreadNotesQuery()
                             {
                                 Connection = connection
@@ -149,6 +154,7 @@ internal class Messenger : IMessenger
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;   
                         case NoteType.chatroom:
+                            _logger.LogInformation($"{userId} 詢問聊天室資訊");
                             message = await _mediator.SendAsync(new GetRoomQuery
                             {
                                 Connection = connection,
