@@ -11,7 +11,7 @@ using Shared.Mediator.Interface;
 
 namespace Message.Application.Commands;
 
-public record struct SendMessageCommand : IRequest<bool>
+public record struct SendMessageCommand : IRequest<MessageModel>
 {
     /// <summary>
     /// 發送者的連接
@@ -31,7 +31,7 @@ public record struct SendMessageCommand : IRequest<bool>
 }
 
 
-public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand,bool>
+public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand,MessageModel>
 {
     private readonly ISnowFlake _snowFlake;
     private readonly IConnection _connection;
@@ -47,16 +47,51 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
         _noteRepository = noteRepository;
     }
 
-    public async Task<bool> HandleAsync(SendMessageCommand request)
+    public async Task<MessageModel> HandleAsync(SendMessageCommand request)
     {
+        MessageModel msg;
         var connection = request.Connection;
         var uri        = connection.Uri;
         var partnerId  = connection.PartnerId;
         var id         = _snowFlake.Get();
 
-        
-        if (uri == null) return false;
-        if (partnerId == null) return false;
+
+        if (uri == null)
+        {
+            msg = new MessageModel
+            {
+                Id = id,
+                Uri = connection.Uri ?? "",
+                ReceiverId = connection.PartnerId?? 0,
+                Content = request.Content,
+                Type = request.Type,
+                Status = 1
+            };
+        }
+        else if (partnerId == null)
+        {
+            msg = new MessageModel
+            {
+                Id = id,
+                Uri = connection.Uri ?? "",
+                ReceiverId = connection.PartnerId?? 0,
+                Content = request.Content,
+                Type = request.Type,
+                Status = 1
+            };
+        }
+        else
+        {
+            msg = new MessageModel
+            {
+                Id = id,
+                Uri = connection.Uri ?? "",
+                ReceiverId = connection.PartnerId?? 0,
+                Content = request.Content,
+                Type = request.Type,
+                Status = 0
+            };
+        }
 
         
         // --------------------------------------------------------------------------------
@@ -67,15 +102,6 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
         {
             var socket = partnerConnection.WebSocket;
             
-            var msg = new MessageModel
-            {
-                Id = id,
-                Uri = connection.Uri ?? "",
-                ReceiverId = connection.PartnerId?? 0,
-                Content = request.Content,
-                Type = request.Type,
-                Status = 0
-            };
             
             var content = JsonSerializer.Serialize(msg, new JsonSerializerOptions()
             {
@@ -100,13 +126,6 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
                         endOfMessage: true,
                         CancellationToken.None);
                 }
-                
-                // processing - 也傳給自己
-                await request.Connection.WebSocket.SendAsync(
-                    segment, 
-                    WebSocketMessageType.Text, 
-                    endOfMessage: true,
-                    CancellationToken.None);
             }
             finally
             {
@@ -130,7 +149,7 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
             ItemId = connection.itemId!.Value
         });
 
-        return true;
+        return msg;
     }
 }
 

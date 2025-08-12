@@ -8,17 +8,20 @@ using Message.Application.Models;
 using Message.Application.Services;
 using Message.Domain.Entities;
 using Message.Infrastructure.Queries;
+using Microsoft.Extensions.Logging;
 using Shared.Mediator.Interface;
 
 namespace Message.Infrastructure.Services;
 
 internal class Messenger : IMessenger
 {
+    private readonly ILogger<Messenger> _logger;
     private readonly IConnection _connection;
     private readonly IMediator _mediator;
     
-    public Messenger(IConnection connection, IMediator mediator)
+    public Messenger(ILogger<Messenger> logger, IConnection connection, IMediator mediator)
     {
+        _logger = logger;
         _connection = connection;
         _mediator = mediator;
     }
@@ -37,11 +40,26 @@ internal class Messenger : IMessenger
         // --------------------------------------------------------------------------------
         //     嘗試將 Socket 加入 Hash Table 中，若嘗試失敗退出 
         // --------------------------------------------------------------------------------
+        bool success = false;
         for (var i = 0; i < 3; i++)
         {
-            if(_connection.Users.TryAdd(userId,connection))
+            if (_connection.Users.TryAdd(userId, connection))
+            {
+                _logger.LogDebug($"{userId} 連線成功");
+                success = true;
                 break;
+            }
+
             Thread.Sleep(100);
+        }
+
+        if (!success)
+        {
+            _logger.LogDebug($"{userId} 連線失敗");
+            await socket.CloseAsync(
+                WebSocketCloseStatus.InternalServerError,
+                "",
+                CancellationToken.None);
         }
         
         // --------------------------------------------------------------------------------
@@ -80,12 +98,13 @@ internal class Messenger : IMessenger
                         case NoteType.sticker:
                         case NoteType.image:
                         case NoteType.video:
-                            await _mediator.SendAsync(new SendMessageCommand
+                            message = await _mediator.SendAsync(new SendMessageCommand
                             {
                                 Connection = connection,
                                 Type = frame.Type,
                                 Content = frame.Content
                             });
+                            await _replyRequestAsync(connection.WebSocket, message);
                             break;
                         case NoteType.join:
                             await _mediator.SendAsync(new JoinTheChatCommand
