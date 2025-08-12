@@ -56,10 +56,19 @@ internal class Messenger : IMessenger
         if (!success)
         {
             _logger.LogInformation($"{userId} 連線失敗");
+            
             await socket.CloseAsync(
                 WebSocketCloseStatus.InternalServerError,
                 "",
                 CancellationToken.None);
+            
+            for (int i = 0; i < 3; i++)
+            {
+                if (_connection.Users.TryRemove(userId, out var _))
+                    break;
+                else
+                    Thread.Sleep(100);
+            }
         }
         
         // --------------------------------------------------------------------------------
