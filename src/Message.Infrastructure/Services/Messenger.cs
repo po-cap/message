@@ -124,7 +124,7 @@ internal class Messenger : IMessenger
                             message = await _mediator.SendAsync(new GetRoomQuery
                             {
                                 Connection = connection,
-                                Uri = content
+                                Uri = frame.Content
                             });
                             await _replyRequestAsync(connection.WebSocket, message);
                             break;  

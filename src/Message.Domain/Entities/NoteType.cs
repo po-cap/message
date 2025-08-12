@@ -55,5 +55,5 @@ public enum NoteType
     /// <summary>
     /// 聊天室訊息
     /// </summary>
-    chatroom
+    chatroom = 10
 }
