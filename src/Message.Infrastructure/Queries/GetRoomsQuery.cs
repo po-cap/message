@@ -57,15 +57,18 @@ public class GetRoomsHandler : IRequestHandler<GetRoomsQuery, IEnumerable<RoomMo
         //
         for (var i = 0; i < request.Uris.Count; i++)
         {
-            var isBuyer = request.UserId == users[i].Id;
+            var isBuyer = request.UserId == buyerIds[i];
+            var buyer   = users.First(x => x.Id == buyerIds[i]);
+            var item    = items.First(x => x.Id == itemIds[i]);
+            var seller  = item.User;
             
             rooms.Add(new RoomModel()
             {
                 Uri = request.Uris[i],
-                PartnerId = isBuyer ? items[i].User.Id : users[i].Id,
-                Title = isBuyer ? items[i].User.DisplayName : users[i].DisplayName,
-                Avatar = isBuyer ? items[i].User.Avatar : users[i].Avatar,
-                Photo = items[i].Albums[0],
+                PartnerId = isBuyer ? seller.Id : buyer.Id,
+                Title = isBuyer ? seller.DisplayName : buyer.DisplayName,
+                Avatar = isBuyer ? seller.Avatar : buyer.Avatar,
+                Photo = item.Albums[0],
             });
         }
 

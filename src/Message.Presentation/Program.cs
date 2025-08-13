@@ -2,7 +2,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Message.Application;
+using Message.Application.Commands;
+using Message.Application.Models;
 using Message.Application.Services;
+using Message.Domain.Entities;
 using Message.Infrastructure;
 using Message.Infrastructure.Queries;
 using Message.Presentation.Utilities;
@@ -122,39 +125,39 @@ app.UseWebSockets();
 
 
 
-app.MapGet("/chat", async (
-    HttpContext ctx, 
-    IMediator mediator) =>
-{
-    var userId = ctx.UserID();
+//app.MapGet("/chat", async (
+//    HttpContext ctx, 
+//    IMediator mediator) =>
+//{
+//    var userId = ctx.UserID();
+//
+//    var room = await mediator.SendAsync(new GetChatRoomsQuery
+//    {
+//        UserId = userId
+//    });
+//
+//    return Results.Ok(room);
+//}).RequireAuthorization();
 
-    var room = await mediator.SendAsync(new GetChatRoomsQuery
-    {
-        UserId = userId
-    });
 
-    return Results.Ok(room);
-}).RequireAuthorization();
-
-
-app.MapGet("/chat/{buyerId:long}/{itemId:long}", async (
-    HttpContext ctx, 
-    IMediator mediator,
-    long buyerId,
-    long itemId) =>
-{
-    var userId = ctx.UserID();
-
-    var room = await mediator.SendAsync(new GetChatRoomQuery
-    {
-        BuyerId = buyerId,
-        ItemId = itemId,
-        UserId = userId
-    });
-
-    return Results.Ok(room);
-
-}).RequireAuthorization();
+//app.MapGet("/chat/{buyerId:long}/{itemId:long}", async (
+//    HttpContext ctx, 
+//    IMediator mediator,
+//    long buyerId,
+//    long itemId) =>
+//{
+//    var userId = ctx.UserID();
+//
+//    var room = await mediator.SendAsync(new GetChatRoomQuery
+//    {
+//        BuyerId = buyerId,
+//        ItemId = itemId,
+//        UserId = userId
+//    });
+//
+//    return Results.Ok(room);
+//
+//}).RequireAuthorization();
 
 
 
@@ -175,6 +178,27 @@ app.MapGet("/ws/chat", async (
             userId: userId);
     }
 }).RequireAuthorization();
+
+
+
+app.MapGet("/chat", async (
+    HttpContext ctx,
+    IConnection connection,
+    IMediator mediator,
+    string[] uri) =>
+{
+    var userId = ctx.UserID();
+
+    var query = new GetRoomsQuery
+    {
+        Uris = uri.ToList(),
+        UserId = userId
+    };
+
+    var rooms = await mediator.SendAsync(query);
+
+    return Results.Ok(rooms);
+});
 
 
 
