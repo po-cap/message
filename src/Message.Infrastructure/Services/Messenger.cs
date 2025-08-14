@@ -94,7 +94,7 @@ internal class Messenger : IMessenger
                     if (frame == null)
                         continue;
 
-                    MessageModel message;
+                    MessageModel? message;
                     switch (frame.Type)
                     {
                         case NoteType.ping:
@@ -113,7 +113,8 @@ internal class Messenger : IMessenger
                                 Type = frame.Type,
                                 Content = frame.Content
                             });
-                            await _replyRequestAsync(connection.WebSocket, message);
+                            if(message != null)
+                                await _replyRequestAsync(connection.WebSocket, message.Value);
                             break;
                         case NoteType.join:
                             _logger.LogInformation($"{userId} 進入聊天室");
@@ -143,7 +144,8 @@ internal class Messenger : IMessenger
                             {
                                 Connection = connection
                             });
-                            await _replyRequestAsync(connection.WebSocket, message);
+                            if(message != null)
+                                await _replyRequestAsync(connection.WebSocket, message.Value);
                             break;
                         case NoteType.unread_messages:
                             _logger.LogInformation($"{userId} 詢問所有未讀訊息");
@@ -151,7 +153,8 @@ internal class Messenger : IMessenger
                             {
                                 Connection = connection
                             });
-                            await _replyRequestAsync(connection.WebSocket, message);
+                            if(message != null)
+                                await _replyRequestAsync(connection.WebSocket, message.Value);
                             break;   
                         case NoteType.chatroom:
                             _logger.LogInformation($"{userId} 詢問聊天室資訊");
@@ -160,7 +163,8 @@ internal class Messenger : IMessenger
                                 Connection = connection,
                                 Uri = frame.Content
                             });
-                            await _replyRequestAsync(connection.WebSocket, message);
+                            if(message != null)
+                                await _replyRequestAsync(connection.WebSocket, message.Value);
                             break;  
                         default:
                             throw new ArgumentOutOfRangeException();

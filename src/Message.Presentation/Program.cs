@@ -2,10 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using Message.Application;
-using Message.Application.Commands;
-using Message.Application.Models;
 using Message.Application.Services;
-using Message.Domain.Entities;
 using Message.Infrastructure;
 using Message.Infrastructure.Queries;
 using Message.Presentation.Utilities;
@@ -183,7 +180,6 @@ app.MapGet("/ws/chat", async (
 
 app.MapGet("/chat", async (
     HttpContext ctx,
-    IConnection connection,
     IMediator mediator,
     string[] uri) =>
 {
