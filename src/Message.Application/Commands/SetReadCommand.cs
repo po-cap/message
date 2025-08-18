@@ -1,3 +1,4 @@
+using Message.Application.Models;
 using Message.Domain.Repositories;
 using Shared.Mediator.Interface;
 
@@ -6,9 +7,9 @@ namespace Message.Application.Commands;
 public class SetReadCommand : IRequest<bool>
 {
     /// <summary>
-    /// 訊息的 ID
+    /// 連接
     /// </summary>
-    public required IEnumerable<long> Ids { get; set; }
+    public required ConnectionModel Connection { get; set; }
 }
 
 
@@ -24,7 +25,14 @@ public class SetReadHandler : IRequestHandler<SetReadCommand, bool>
 
     public Task<bool> HandleAsync(SetReadCommand request)
     {
-        _noteRepository.SetRead(request.Ids);
+        var uri = request.Connection.Uri;
+        if (string.IsNullOrEmpty(uri))
+            return Task.FromResult(false);
+        
+        _noteRepository.SetRead(
+            request.Connection.UserId, 
+            request.Connection.Uri!);
+        
         return Task.FromResult(true);
     }
 }

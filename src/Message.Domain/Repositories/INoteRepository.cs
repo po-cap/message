@@ -11,8 +11,9 @@ public interface INoteRepository
     void Add(Note note);
     
     /// <summary>
-    /// 設置成已讀
+    /// 設置使用者已讀
     /// </summary>
-    /// <param name="ids"></param>
-    void SetRead(IEnumerable<long> ids);
+    /// <param name="userId"></param>
+    /// <param name="uri"></param>
+    void SetRead(long userId, string uri);
 }

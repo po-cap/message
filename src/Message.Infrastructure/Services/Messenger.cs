@@ -135,7 +135,7 @@ internal class Messenger : IMessenger
                             _logger.LogInformation($"{userId} 讀取訊息");
                             await _mediator.SendAsync(new SetReadCommand()
                             {
-                                Ids = JsonSerializer.Deserialize<List<long>>(frame.Content) ?? []
+                                Connection = connection,
                             });
                             break;
                         case NoteType.unread_count:
