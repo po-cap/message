@@ -28,6 +28,11 @@ public record struct SendMessageCommand : IRequest<MessageModel?>
     /// </summary>
     public required string Content { get; set; }
     
+    /// <summary>
+    /// 標籤，主要是用來讓用戶查看訊息是否成空傳送出去用的
+    /// </summary>
+    public required string Tag { get; set; }
+    
 }
 
 
@@ -81,7 +86,8 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
                 ReceiverId = connection.PartnerId?? 0,
                 Content = request.Content,
                 Type = request.Type,
-                Status = 0
+                Status = 0,
+                Tag = request.Tag
             };
         }
 

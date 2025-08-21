@@ -111,7 +111,8 @@ internal class Messenger : IMessenger
                             {
                                 Connection = connection,
                                 Type = frame.Type,
-                                Content = frame.Content
+                                Content = frame.Content,
+                                Tag = frame.Tag
                             });
                             if(message != null)
                                 await _replyRequestAsync(connection.WebSocket, message.Value);

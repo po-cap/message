@@ -43,6 +43,12 @@ public struct MessageModel
     /// </summary>
     [JsonPropertyName("status")]
     public required int Status { get; set; }
+    
+    /// <summary>
+    /// 標籤，主要是用來讓用戶查看訊息是否成空傳送出去用的
+    /// </summary>
+    [JsonPropertyName("tag")]
+    public string Tag { get; set; }
 }
 
 public static partial class MapExtension
