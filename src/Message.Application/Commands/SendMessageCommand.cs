@@ -153,7 +153,7 @@ public record struct SendTextMessageHandler : IRequestHandler<SendMessageCommand
         {
             Id = id,
             ReceiverId = partnerId.Value,
-            Type = NoteType.text,
+            Type = request.Type,
             Content = request.Content,
             CreatedAt = DateTimeOffset.Now,
             ReadAt = read ? DateTimeOffset.Now : null,
